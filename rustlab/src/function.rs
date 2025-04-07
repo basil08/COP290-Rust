@@ -198,8 +198,8 @@ fn parse_and_validate_range(
         return Err(error_return());
     }
 
-    AddFormula(graph, first_cell, range_start, range_end, formula_type, formula_array);
-    AddRangeToGraph(graph, range_start, range_end, first_cell);
+    graph.add_formula(first_cell, range_start, range_end, formula_type, formula_array);
+    graph.add_range_to_graph(range_start, range_end, first_cell);
 
     let start_row = range_start / c;
     let start_col = range_start % c;
@@ -551,24 +551,24 @@ fn sleep_func(
         let sleep_value = arr[ref_cell as usize];
         if !sleep_value.is_valid {
             arr[target_cell as usize] = Cell::invalid();
-            AddFormula(graph, target_cell, ref_cell, ref_cell, 14, formula_array); // Using ref_cell as a placeholder for range_end
-            graph.adjLists_head[ref_cell as usize] = Addedge(target_cell, graph.adjLists_head[ref_cell as usize].clone());
+            graph.add_formula( target_cell, ref_cell, ref_cell, 14, formula_array); // Using ref_cell as a placeholder for range_end
+            graph.adjLists_head[ref_cell as usize] = graph.add_edge(target_cell, graph.adjLists_head[ref_cell as usize].clone());
             return 1;
         }
         arr[target_cell as usize] = sleep_value.clone();
-        AddFormula(graph, target_cell, ref_cell, ref_cell, 14, formula_array);
-        graph.adjLists_head[ref_cell as usize] = Addedge(target_cell, graph.adjLists_head[ref_cell as usize].clone());
+        graph.add_formula(target_cell, ref_cell, ref_cell, 14, formula_array);
+        graph.adjLists_head[ref_cell as usize] = graph.add_edge(target_cell, graph.adjLists_head[ref_cell as usize].clone());
     } else {
         let sleep_str = &a[open_paren + 1..close_paren];
         if let Ok(sleep_value) = sleep_str.parse::<i32>() {
             arr[target_cell as usize] = Cell::new_int(sleep_value);
-            AddFormula(graph, target_cell, target_cell, target_cell, 14, formula_array); // Using target_cell as placeholder
+            graph.add_formula(target_cell, target_cell, target_cell, 14, formula_array); // Using target_cell as placeholder
         } else if let Ok(sleep_value) = sleep_str.parse::<f64>() {
             arr[target_cell as usize] = Cell::new_float(sleep_value);
-            AddFormula(graph, target_cell, target_cell, target_cell, 14, formula_array);
+            graph.add_formula(target_cell, target_cell, target_cell, 14, formula_array);
         } else {
             arr[target_cell as usize] = Cell::new_string(sleep_str.to_string());
-            AddFormula(graph, target_cell, target_cell, target_cell, 14, formula_array);
+            graph.add_formula(target_cell, target_cell, target_cell, 14, formula_array);
         }
     }
 
