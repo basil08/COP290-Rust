@@ -53,6 +53,28 @@ fn arithmetic_eval2(v1: i32, v2: i32, op: char) -> i32 {
     }
 }
 
+// didnt found its implementation so wrote the funtion here
+// Calculate standard deviation
+fn std(values: &[i32], count: usize) -> i32 {
+    if count <= 1 {
+        return 0;
+    }
+    
+    let sum: i32 = values.iter().sum();
+    let mean = sum as f64 / count as f64;
+    
+    let variance_sum: f64 = values.iter()
+        .map(|&x| {
+            let diff = x as f64 - mean;
+            diff * diff
+        })
+        .sum();
+    
+    let variance = variance_sum / count as f64;
+    let std_dev = variance.sqrt();
+    
+    std_dev as i32
+}
 
 impl Graph {
     // Create a new Graph
