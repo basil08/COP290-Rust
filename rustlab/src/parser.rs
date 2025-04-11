@@ -65,15 +65,44 @@ fn value_func(
     let mut is_cell = false;
     let mut is_negative = false;
     let mut pos = pos_equalto + 1;
-
+    
     if pos < a.len() && (a[pos..].starts_with('-') || a[pos..].starts_with('+')) {
         is_negative = a[pos..].starts_with('-');
         pos += 1;
+
     }
 
     let rest = &a[pos..pos_end];
-    if rest.chars().next().map_or(false, is_digit) {
-        second_cell = rest.parse::<i32>().map_err(|_| "Invalid number")?;
+
+    if rest.starts_with('"') && rest.ends_with('"'){
+        let string_content = &rest[1..rest.len() - 1];
+        arr[first_cell as usize] = Cell::new_string(string_content.to_string());
+        graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
+        return Ok(());
+    }
+    else if rest.chars().all(|ch| is_digit(ch)) {
+        let parsed_int = rest.parse::<i32>().map_err(|_| "Invalid integer")?;
+        arr[first_cell as usize] = Cell::new_int(parsed_int);
+        graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
+        return Ok(());
+    } else if rest.contains('.') && rest.chars().all(|ch| is_digit(ch) || ch == '.') {
+        let parsed_float = rest.parse::<f64>().map_err(|_| "Invalid float")?;
+        arr[first_cell as usize] = Cell::new_float(parsed_float);
+        graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
+        return Ok(());
+    }
+    else if rest.chars().next().map_or(false, |ch| is_digit(ch) || ch == '.') {
+        if let Ok(parsed_int) = rest.parse::<i32>() {
+            arr[first_cell as usize] = Cell::new_int(parsed_int);
+            graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
+            return Ok(());
+        } else if let Ok(parsed_float) = rest.parse::<f64>() {
+            arr[first_cell as usize] = Cell::new_float(parsed_float);
+            graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
+            return Ok(());
+        } else {
+            return Err("Invalid number or float");
+        }
     } else {
         second_cell = cell_parser(a, c, r, pos, pos_end - 1)?;
         is_cell = true;
@@ -131,7 +160,7 @@ fn arth_op(
 ) -> Result<(), &'static str> {
     let mut operation = None;
     let mut opindex = None;
-
+    println!("[DEBUG] Parsing arithmetic operation: {}", &a[pos_equalto + 1..pos_end]);
     for (i, ch) in a[pos_equalto + 1..pos_end].chars().enumerate() {
         if "+-*/".contains(ch) && i + pos_equalto + 1 > pos_equalto + 1 {
             let prev = a[(i + pos_equalto)..].chars().next().unwrap();

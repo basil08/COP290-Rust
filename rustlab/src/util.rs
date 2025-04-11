@@ -16,7 +16,12 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
                     if *i2 == 0 {
                         Cell::invalid()
                     } else {
-                        Cell::new_int(i1 / i2)
+
+                        if *i1 % *i2 == 0 {
+                            Cell::new_int(i1 / i2)
+                        } else {
+                            Cell::new_float((*i1 as f64) / (*i2 as f64))
+                        }
                     }
                 }
                 _ => Cell::invalid(),
@@ -66,6 +71,15 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
                         Cell::new_float(f1 / f2)
                     }
                 }
+                _ => Cell::invalid(),
+            }
+        }
+        (CellValue::String(s1), CellValue::String(s2)) => {
+            match op {
+                '+' => Cell::new_string(format!("{}{}", s1, s2)),
+                '-' => Cell::invalid(),
+                '*' => Cell::invalid(),
+                '/' => Cell::invalid(),
                 _ => Cell::invalid(),
             }
         }
