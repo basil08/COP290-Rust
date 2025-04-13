@@ -48,10 +48,9 @@ fn value_func(
     arr: &mut [Cell],
     graph: &mut Graph,
     formula_array: &mut [Formula],
-    state: &mut State
+    state: &mut State,
 ) -> Result<(), &'static str> {
     let first_cell = cell_parser(a, c, r, 0, pos_equalto - 1)?;
-    
     state.old_value = arr[first_cell as usize].clone();
     state.old_op_type = formula_array[first_cell as usize].op_type;
     state.old_op_info1 = formula_array[first_cell as usize].op_info1;
@@ -64,45 +63,25 @@ fn value_func(
     let mut second_cell = -1;
     let mut is_cell = false;
     let mut is_negative = false;
+
     let mut pos = pos_equalto + 1;
-    
     if pos < a.len() && (a[pos..].starts_with('-') || a[pos..].starts_with('+')) {
         is_negative = a[pos..].starts_with('-');
         pos += 1;
-
     }
 
-    let rest = &a[pos..pos_end];
-
-    if rest.starts_with('"') && rest.ends_with('"'){
-        let string_content = &rest[1..rest.len() - 1];
-        arr[first_cell as usize] = Cell::new_string(string_content.to_string());
-        graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
+    if a[pos..pos_end].starts_with('"') && a[pos..pos_end].ends_with('"') {
+        // Handle string values
+        let string_value = &a[pos + 1..pos_end - 1]; // Remove surrounding quotes
+        
+        graph.add_formula(first_cell, 0, 0, 0, formula_array);
+        graph.recalc(c, arr, first_cell, formula_array, state)?;
+        println!("Stored string in cell {}: {}", first_cell, string_value);
+        arr[first_cell as usize] = Cell::new_string(string_value.to_string());
+        println!("[debug] {:?}", arr[first_cell as usize]);
         return Ok(());
-    }
-    else if rest.chars().all(|ch| is_digit(ch)) {
-        let parsed_int = rest.parse::<i32>().map_err(|_| "Invalid integer")?;
-        arr[first_cell as usize] = Cell::new_int(parsed_int);
-        graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
-        return Ok(());
-    } else if rest.contains('.') && rest.chars().all(|ch| is_digit(ch) || ch == '.') {
-        let parsed_float = rest.parse::<f64>().map_err(|_| "Invalid float")?;
-        arr[first_cell as usize] = Cell::new_float(parsed_float);
-        graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
-        return Ok(());
-    }
-    else if rest.chars().next().map_or(false, |ch| is_digit(ch) || ch == '.') {
-        if let Ok(parsed_int) = rest.parse::<i32>() {
-            arr[first_cell as usize] = Cell::new_int(parsed_int);
-            graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
-            return Ok(());
-        } else if let Ok(parsed_float) = rest.parse::<f64>() {
-            arr[first_cell as usize] = Cell::new_float(parsed_float);
-            graph.add_formula(first_cell, first_cell, 0, 0, formula_array);
-            return Ok(());
-        } else {
-            return Err("Invalid number or float");
-        }
+    } else if a[pos..pos_end].chars().all(is_digit) {
+        second_cell = a[pos..pos_end].parse::<i32>().map_err(|_| "Invalid integer")?;
     } else {
         second_cell = cell_parser(a, c, r, pos, pos_end - 1)?;
         is_cell = true;
@@ -112,26 +91,27 @@ fn value_func(
         second_cell = -second_cell;
     }
 
-    if !is_cell {
+    if !is_cell && !a[pos..pos_end].starts_with('"') {
         arr[first_cell as usize] = Cell::new_int(second_cell);
         graph.add_formula(first_cell, second_cell, 0, 0, formula_array);
-    } else {
-        let value = if is_negative { 
+        graph.recalc(c, arr, first_cell, formula_array, state)?;
+    } else if is_cell {
+        let value = if is_negative {
             match arr[second_cell as usize].value {
                 CellValue::Int(i) => Cell::new_int(-i),
                 CellValue::Float(f) => Cell::new_float(-f),
                 _ => Cell::invalid(),
             }
-        } else { 
-            arr[second_cell as usize].clone() 
+        } else {
+            arr[second_cell as usize].clone()
         };
         arr[first_cell as usize] = value;
         graph.add_edge(first_cell, second_cell as usize);
         let op_type = if is_negative { 3 } else { 1 };
         graph.add_formula(first_cell, second_cell, -1, op_type, formula_array);
+        graph.recalc(c, arr, first_cell, formula_array, state)?;
     }
 
-    graph.recalc(c, arr, first_cell, formula_array, state)?;
     if state.has_cycle {
         arr[first_cell as usize] = state.old_value.clone();
         graph.delete_edge(first_cell, c, formula_array);
