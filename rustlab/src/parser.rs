@@ -73,12 +73,12 @@ fn value_func(
     if a[pos..pos_end].starts_with('"') && a[pos..pos_end].ends_with('"') {
         // Handle string values
         let string_value = &a[pos + 1..pos_end - 1]; // Remove surrounding quotes
-        
-        graph.add_formula(first_cell, 0, 0, 0, formula_array);
-        graph.recalc(c, arr, first_cell, formula_array, state)?;
-        println!("Stored string in cell {}: {}", first_cell, string_value);
         arr[first_cell as usize] = Cell::new_string(string_value.to_string());
         println!("[debug] {:?}", arr[first_cell as usize]);
+        graph.add_formula(first_cell, 0, 0, 16, formula_array);
+        graph.recalc(c, arr, first_cell, formula_array, state)?;
+        println!("Stored string in cell {}: {}", first_cell, string_value);
+       
         return Ok(());
     } else if a[pos..pos_end].chars().all(is_digit) {
         second_cell = a[pos..pos_end].parse::<i32>().map_err(|_| "Invalid integer")?;

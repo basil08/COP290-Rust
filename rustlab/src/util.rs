@@ -75,6 +75,7 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
             }
         }
         (CellValue::String(s1), CellValue::String(s2)) => {
+            println!("String operation: {} {} {}", s1, op, s2);
             match op {
                 '+' => Cell::new_string(format!("{}{}", s1, s2)),
                 '-' => Cell::invalid(),
@@ -83,7 +84,8 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
                 _ => Cell::invalid(),
             }
         }
-        _ => Cell::invalid(),
+        _ => { println!("Invalid operation: {:?} {} {:?}", v1.value, op, v2.value);
+            Cell::invalid() },
     }
 }
 
