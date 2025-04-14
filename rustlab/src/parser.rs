@@ -40,6 +40,7 @@ pub fn cell_parser(a: &str, c: i32, r: i32, start: usize, end: usize) -> Result<
 }
 
 fn value_func(
+
     a: &str,
     c: i32,
     r: i32,
@@ -50,6 +51,7 @@ fn value_func(
     formula_array: &mut [Formula],
     state: &mut State,
 ) -> Result<(), &'static str> {
+    println!("[DEBUG] Parsing value function: {}", &a[pos_equalto + 1..pos_end]);
     let first_cell = cell_parser(a, c, r, 0, pos_equalto - 1)?;
     state.old_value = arr[first_cell as usize].clone();
     state.old_op_type = formula_array[first_cell as usize].op_type;
@@ -82,15 +84,33 @@ fn value_func(
         return Ok(());
     } else if a[pos..pos_end].chars().all(is_digit) {
         second_cell = a[pos..pos_end].parse::<i32>().map_err(|_| "Invalid integer")?;
-    } else {
+    } 
+    else if a[pos..pos_end].chars().any(|ch| ch == '.') {
+    let float_value = a[pos..pos_end].parse::<f64>().map_err(|_| "Invalid float")?;
+    arr[first_cell as usize] = Cell::new_float(float_value);
+    println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
+    println!("[DEBUG] Float value: {}", float_value);
+    graph.add_formula(first_cell, 0, 0, 17, formula_array);
+    println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
+    
+    graph.recalc(c, arr, first_cell, formula_array, state)?;
+    println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
+    
+    return Ok(());
+    } 
+    else {
         second_cell = cell_parser(a, c, r, pos, pos_end - 1)?;
+        println!("[DEBUG] Cell reference: {}", second_cell);
         is_cell = true;
+        
     }
 
+    println!("[DEBUG] Before handling negative: second_cell = {}, is_negative = {}, is_cell = {}", second_cell, is_negative, is_cell);
     if is_negative && !is_cell {
         second_cell = -second_cell;
     }
-
+    println!("[DEBUG] After handling negative: second_cell = {}", second_cell);
+    // println!("[DEBUG] Value of second_cell: {:?}", arr[second_cell as usize].value);
     if !is_cell && !a[pos..pos_end].starts_with('"') {
         arr[first_cell as usize] = Cell::new_int(second_cell);
         graph.add_formula(first_cell, second_cell, 0, 0, formula_array);
@@ -105,11 +125,28 @@ fn value_func(
         } else {
             arr[second_cell as usize].clone()
         };
+        println!("[DEBUG] Value of second_cell: {:?}", value.value);
         arr[first_cell as usize] = value;
+        println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
         graph.add_edge(first_cell, second_cell as usize);
-        let op_type = if is_negative { 3 } else { 1 };
-        graph.add_formula(first_cell, second_cell, -1, op_type, formula_array);
+        println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
+       
+        let op_type = -1;
+        // let mut v;
+        // if let CellValue::String(_) = arr[second_cell as usize].value {
+        //     v = "".to_string();
+        // } else if let CellValue::Float(_) = arr[second_cell as usize].value {
+        //     v = 0.0;
+        // } else {
+        //     v = 0;
+        // }
+        
+        graph.add_formula(first_cell, second_cell, 0, op_type, formula_array);
+        println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
+       
         graph.recalc(c, arr, first_cell, formula_array, state)?;
+        println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
+       
     }
 
     if state.has_cycle {

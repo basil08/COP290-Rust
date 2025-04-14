@@ -176,6 +176,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
     pub fn delete_edge(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
         let x = formula_array[cell as usize];
         match x.op_type {
+            -1 => self.delete_node(cell, x.op_info1 as usize),
             1..=4 => self.delete_node(cell, x.op_info1 as usize),
             5..=8 => {
                 self.delete_node(cell, x.op_info1 as usize);
@@ -191,6 +192,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
     pub fn add_edge_formula(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
         let x = formula_array[cell as usize];
         match x.op_type {
+            -1 => self.add_edge(cell, x.op_info1 as usize),
             1..=4 => self.add_edge(cell, x.op_info1 as usize),
             5..=8 => {
                 self.add_edge(cell, x.op_info1 as usize);
@@ -280,6 +282,23 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
         for &cell in &sorted_cells {
             let f = formula_array[cell as usize];
             match f.op_type {
+                -1 => { // for cell = cell
+                    let v1 = arr[f.op_info1 as usize].clone();
+                    
+                    if !v1.is_valid {
+                        println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
+                        arr[cell as usize] = Cell::invalid();
+                        continue;
+                    }
+                    // let op = match f.op_type {
+                    //     1 => '+',
+                    //     2 => '-',
+                    //     3 => '*',
+                    //     4 => '/',
+                    //     _ => unreachable!(),
+                    // };
+                    arr[cell as usize] = v1;
+                }
                 0 => arr[cell as usize] = Cell::new_int(f.op_info1),
                 1..=4 => {
                     let v1 = arr[f.op_info1 as usize].clone();
@@ -414,6 +433,9 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                 }
                 16 => {
                     // Do nothing — string is already assigned in arr, skip overwriting
+                }
+                17 =>{
+                    //Do nothing - float is already assigned 
                 }
                 
                 _ => {
