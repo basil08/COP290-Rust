@@ -15,13 +15,10 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
                 '/' => {
                     if *i2 == 0 {
                         Cell::invalid()
+                    } else if *i1 % *i2 == 0 {
+                        Cell::new_int(i1 / i2)
                     } else {
-
-                        if *i1 % *i2 == 0 {
-                            Cell::new_int(i1 / i2)
-                        } else {
-                            Cell::new_float((*i1 as f64) / (*i2 as f64))
-                        }
+                        Cell::new_float((*i1 as f64) / (*i2 as f64))
                     }
                 }
                 _ => Cell::invalid(),

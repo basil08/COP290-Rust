@@ -1,5 +1,4 @@
 
-use std::cmp::min;
 use std::thread::sleep;
 use std::time::Duration;
 use crate::function::Cell;
@@ -231,7 +230,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
         visited[cell as usize] = true;
         on_stack[cell as usize] = true;
         let mut current = &self.adj_lists_head[cell as usize];
-        while let Some(ref node) = current.as_ref() {
+        while let Some(node) = current.as_ref() {
             let dependent = node.cell;
             if !visited[dependent as usize] {
                 self.dfs(dependent, visited, on_stack, result, has_cycle, cols);
@@ -245,7 +244,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
             current = &node.next;
         }
         let mut range = &self.ranges_head;
-        while let Some(ref r) = range.as_ref() {
+        while let Some(r) = range.as_ref() {
             let start_cell = r.start_cell;
             let end_cell = r.end_cell;
             let dependent = r.dependent_cell;

@@ -3,11 +3,11 @@ use crate::util::{arithmetic_eval, return_optype};
 use crate::function::CellValue;
 
 fn is_alpha(c: char) -> bool {
-    c.is_ascii_uppercase() && c >= 'A' && c <= 'Z'
+    c.is_ascii_uppercase() && ('A'..='Z').contains(&c)
 }
 
 fn is_digit(c: char) -> bool {
-    c.is_digit(10)
+    c.is_ascii_digit()
 }
 
 pub fn cell_parser(a: &str, c: i32, r: i32, start: usize, end: usize) -> Result<i32, &'static str> {
