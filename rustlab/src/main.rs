@@ -52,10 +52,10 @@ let mut redo_stack: Vec<StateSnapshot> = Vec::new();
     if output_enabled {
         printer(currx, curry, &arr, cols_i32, rows_i32);
     }
-
+    print!("[0.0] (ok) > ");
     loop {
         let start = Instant::now();
-        print!("[0.0] (ok) > ");
+        
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
@@ -122,13 +122,13 @@ let mut redo_stack: Vec<StateSnapshot> = Vec::new();
                 if output_enabled {
                     printer(currx, curry, &arr, cols_i32, rows_i32);
                 }
-                println!("[{:.1}] (ok) >", elapsed);
+                print!("[{:.1}] (ok) > ", elapsed);
             }
             Err(e) => {
                 if output_enabled {
                     printer(currx, curry, &arr, cols_i32, rows_i32);
                 }
-                println!("[{:.1}] ({}) >", elapsed, e);
+                print!("[{:.1}] ({}) > ", elapsed, e);
             }
         }
     }

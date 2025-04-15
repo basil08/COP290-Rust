@@ -297,7 +297,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                     let v1 = arr[f.op_info1 as usize].clone();
                     
                     if !v1.is_valid {
-                        println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
+                        // println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
                         arr[cell as usize] = Cell::invalid();
                         continue;
                     }
@@ -316,7 +316,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                     let v2 = Cell::new_int(f.op_info2);
                     
                     if !v1.is_valid {
-                        println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
+                        // println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
                         arr[cell as usize] = Cell::invalid();
                         continue;
                     }
@@ -333,8 +333,8 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                     let v1 = arr[f.op_info1 as usize].clone();
                     let v2 = arr[f.op_info2 as usize].clone();
                     if !v1.is_valid || !v2.is_valid {
-                        println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
-                        println!("Invalid value for cell {}: {:?}", f.op_info2, v2);
+                        // println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
+                        // println!("Invalid value for cell {}: {:?}", f.op_info2, v2);
                         arr[cell as usize] = Cell::invalid();
                         continue;
                     }
@@ -394,7 +394,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                         }
                     }
                     if has_error || count == 0 {
-                        println!("Invalid range for cell {}: {:?}", cell, arr[cell as usize]);
+                        // println!("Invalid range for cell {}: {:?}", cell, arr[cell as usize]);
                         arr[cell as usize] = Cell::invalid();
                         continue;
                     }
@@ -421,7 +421,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                         sleep_value = Cell::new_int(f.op_info2);
                     }
                     if !sleep_value.is_valid {
-                        println!("Invalid value for cell {}: {:?}", f.op_info1, sleep_value);
+                        // println!("Invalid value for cell {}: {:?}", f.op_info1, sleep_value);
                         arr[cell as usize] = Cell::invalid();
                         continue;
                     }
@@ -436,7 +436,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                     let v1 = Cell::new_int(f.op_info1);
                     let v2 = arr[f.op_info2 as usize].clone();
                     if !v2.is_valid {
-                        println!("Invalid value for cell {}: {:?}", f.op_info2, v2);
+                        // println!("Invalid value for cell {}: {:?}", f.op_info2, v2);
                         arr[cell as usize] = Cell::invalid();
                         continue;
                     }
@@ -450,7 +450,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                 }
                 
                 _ => {
-                    println!("Invalid formula type for cell {}: {:?}", cell, f.op_type); ;
+                    // println!("Invalid formula type for cell {}: {:?}", cell, f.op_type); ;
                  arr[cell as usize] = Cell::invalid()},
             }
         }
