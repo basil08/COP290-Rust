@@ -1,6 +1,8 @@
 use std::io::{self, Write};
 use std::env;
 use std::time::Instant;
+use graph::StateSnapshot;
+
 
 mod display;
 mod function;
@@ -12,6 +14,17 @@ use display::{printer, scroller};
 use function::Cell;
 use graph::{Graph, Formula, State};
 use parser::parser;
+fn create_snapshot(
+    arr: &Vec<Cell>,
+    formula_array: &Vec<Formula>,
+    graph: &Graph,
+) -> StateSnapshot {
+    StateSnapshot {
+        arr: arr.clone(),
+        formula_array: formula_array.clone(),
+        graph: graph.clone(),
+    }
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -19,6 +32,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         eprintln!("Usage: ./sheet <rows> <cols>");
         std::process::exit(1);
     }
+    let mut undo_stack: Vec<StateSnapshot> = Vec::new();
+let mut redo_stack: Vec<StateSnapshot> = Vec::new();
 
     let rows: usize = args[1].parse().expect("Invalid number of rows");
     let cols: usize = args[2].parse().expect("Invalid number of columns");
@@ -67,9 +82,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let cmd = input.replacen("scroll_to ", "", 1);
                 scroller(&format!("scroll_to {}", cmd), &arr, &mut currx, &mut curry, cols_i32, rows_i32, &graph)
             }
-            _ => parser(input, cols_i32, rows_i32, &mut arr, &mut graph, &mut formula_array, &mut state),
+            "undo" => {
+                if let Some(prev) = undo_stack.pop() {
+                    redo_stack.push(create_snapshot(&arr, &formula_array, &graph));
+                    arr = prev.arr;
+                    formula_array = prev.formula_array;
+                    graph = prev.graph;
+                    Ok(())
+                } else {
+                    Err("Nothing to undo")
+                }
+            }
+            "redo" => {
+                if let Some(next) = redo_stack.pop() {
+                    undo_stack.push(create_snapshot(&arr, &formula_array, &graph));
+                    arr = next.arr;
+                    formula_array = next.formula_array;
+                    graph = next.graph;
+                    Ok(())
+                } else {
+                    Err("Nothing to redo")
+                }
+            }
+            _ => {
+                // 🧠 Save snapshot before parsing a new command
+                undo_stack.push(create_snapshot(&arr, &formula_array, &graph));
+                if undo_stack.len() > 5 {
+                    undo_stack.remove(0);
+                }
+                redo_stack.clear(); // New action invalidates redo history
+        
+                parser(input, cols_i32, rows_i32, &mut arr, &mut graph, &mut formula_array, &mut state)
+            }
         };
-
+        
         let elapsed = start.elapsed().as_secs_f32();
         match result {
             Ok(_) => {

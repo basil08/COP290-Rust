@@ -14,21 +14,30 @@ pub struct Formula {
     pub op_info2: i32,
 }
 
+#[derive(Clone)]
 pub struct GraphNode {
     pub cell: i32,
     pub next: Option<Box<GraphNode>>,
 }
 
+#[derive(Clone)]
 pub struct Range {
     pub start_cell: i32,
     pub end_cell: i32,
     pub dependent_cell: i32,
     pub next: Option<Box<Range>>,
 }
-
 pub struct Graph {
     pub adj_lists_head: Vec<Option<Box<GraphNode>>>,
     pub ranges_head: Option<Box<Range>>,
+}
+impl Clone for Graph {
+    fn clone(&self) -> Self {
+        Graph {
+            adj_lists_head: self.adj_lists_head.clone(),
+            ranges_head: self.ranges_head.clone(),
+        }
+    }
 }
 
 impl Graph {
@@ -42,6 +51,7 @@ impl Graph {
             ranges_head: None,
         }
     }
+
 
     pub fn add_formula(&mut self, cell: i32, c1: i32, c2: i32, op_type: i32, formula_array: &mut [Formula]) {
         let mut new_formula = Formula {
@@ -121,6 +131,7 @@ impl Graph {
         }
     }
 
+    
     
 //     void DeleteRangeFromGraph(Graph *graph, int dependentCell)
 // {
@@ -473,4 +484,10 @@ impl State {
             num_cells: 0,
         }
     }
+}
+#[derive(Clone)]
+pub struct StateSnapshot {
+    pub arr: Vec<Cell>,
+    pub formula_array: Vec<Formula>,
+    pub graph: Graph,
 }
