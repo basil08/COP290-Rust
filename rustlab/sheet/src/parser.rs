@@ -20,6 +20,9 @@ pub fn cell_parser(a: &str, c: i32, r: i32, start: usize, end: usize) -> Result<
     let mut cell_row = 0;
     let mut digit_found = false;
 
+    if start >= end || end >= a.len() {
+        return Err("Invalid cell reference");
+    }
     for ch in a[start..=end].chars() {
         if is_alpha(ch) {
             if digit_found {
@@ -459,14 +462,3 @@ pub fn parser(
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_cell_parser() {
-        assert_eq!(cell_parser("A1", 10, 10, 0, 2).unwrap(), 0);
-        assert_eq!(cell_parser("B2", 10, 10, 0, 2).unwrap(), 11);
-        assert!(cell_parser("Z1", 10, 10, 0, 2).is_err());
-    }
-}

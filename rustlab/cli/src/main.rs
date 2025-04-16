@@ -133,6 +133,5 @@ let mut redo_stack: Vec<StateSnapshot> = Vec::new();
             }
         }
     }
-
     Ok(())
 }
