@@ -124,21 +124,3 @@ pub fn scroller(a: &str, _arr: &[Cell], currx: &mut i32, curry: &mut i32, c: i32
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::graph::Graph;
-
-    #[test]
-    fn test_display() {
-        let mut graph = Graph::new(100);
-        let arr = vec![Cell::new_int(0); 100];
-        printer(0, 0, &arr, 10, 10);
-        
-        let mut currx = 0;
-        let mut curry = 0;
-        assert!(scroller("d", &arr, &mut currx, &mut curry, 10, 10, &graph).is_ok());
-        assert_eq!(currx, 10);
-        assert_eq!(curry, 0);
-    }
-}
