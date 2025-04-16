@@ -9,14 +9,16 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# cli is in a subdirectory
 jobs:
-  build:
-
+  build-and-test-cli:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+
+    - name: Build CLI
+      run: cargo build --manifest-path rustlab/cli/Cargo.toml --verbose
+
+    - name: Run CLI Tests
+      run: cargo test --manifest-path rustlab/cli/Cargo.toml --verbose
