@@ -3,9 +3,18 @@ name = "rustlab"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+web = ["yew"]
+
 [dependencies]
+yew = { version = "0.21", optional = true, features = ["csr"] }
 
 [[bin]]
 name = "spreadsheet"
 path = "src/main.rs"
 
+[[bin]]
+name = "frontend"
+path = "frontend/src/main.rs"
+required-features = ["web"]
