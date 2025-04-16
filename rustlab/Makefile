@@ -15,7 +15,7 @@ run: build
 	./$(BUILD_DIR)/release/$(EXECUTABLE)
 
 web:
-	cd frontend && trunk serve
+	cd frontend && trunk serve --open
 
 # Clean the build artifacts
 clean:
