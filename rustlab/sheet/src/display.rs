@@ -1,7 +1,7 @@
 use std::cmp::min;
 use crate::function::{Cell, CellValue};
 use crate::parser::cell_parser;
-use crate::Graph;
+use crate::graph::Graph;
 
 pub fn printer(currx: i32, curry: i32, arr: &[Cell], c: i32, r: i32) {
     print!("      ");

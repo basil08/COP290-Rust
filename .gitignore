@@ -1,5 +1,7 @@
 # Compiled output
-/target/
+**/target/
+
+**/dist/
 
 # Rust/Cargo specific files
 **/*.rs.bk

@@ -672,13 +672,13 @@
 // }
 use std::f64;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Cell {
     pub value: CellValue,
     pub is_valid: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum CellValue {
     Int(i32),
     Float(f64),
