@@ -1,6 +1,8 @@
 # Compiled output
 **/target/
 
+**/dist/
+
 # Rust/Cargo specific files
 **/*.rs.bk
 Cargo.lock
