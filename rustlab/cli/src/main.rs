@@ -4,16 +4,17 @@ use std::time::Instant;
 use graph::StateSnapshot;
 
 
-mod display;
-mod function;
-mod graph;
-mod parser;
-mod util;
+use sheet::display;
+use sheet::function;
+use sheet::graph;
+use sheet::parser;
+use sheet::util;
 
 use display::{printer, scroller};
 use function::Cell;
 use graph::{Graph, Formula, State};
 use parser::parser;
+
 fn create_snapshot(
     arr: &Vec<Cell>,
     formula_array: &Vec<Formula>,
