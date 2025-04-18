@@ -4,9 +4,6 @@ pub mod graph;
 pub mod parser;
 pub mod util;
 
-
-// use crate::{ parser, util, display, graph};
-
 pub use function::{Cell, CellValue}; // make Cell public
 
 
