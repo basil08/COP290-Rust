@@ -1,492 +1,370 @@
+use std::collections::VecDeque;
+use std::i32;
 
-use std::thread::sleep;
-use std::time::Duration;
-use crate::function::Cell;
-use crate::util::arithmetic_eval;
-
-use crate::function::CellValue;
-
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Formula {
     pub op_type: i32,
     pub op_info1: i32,
     pub op_info2: i32,
 }
 
-#[derive(Clone)]
-pub struct GraphNode {
-    pub cell: i32,
-    pub next: Option<Box<GraphNode>>,
+#[derive(Debug)]
+pub struct Cell {
+    pub cell: usize,
+    pub next: Option<Box<Cell>>,
 }
 
-#[derive(Clone)]
+#[derive(Debug)]
 pub struct Range {
-    pub start_cell: i32,
-    pub end_cell: i32,
-    pub dependent_cell: i32,
+    pub start_cell: usize,
+    pub end_cell: usize,
+    pub dependent_cell: usize,
     pub next: Option<Box<Range>>,
 }
+
 pub struct Graph {
-    pub adj_lists_head: Vec<Option<Box<GraphNode>>>,
-    pub ranges_head: Option<Box<Range>>,
-}
-impl Clone for Graph {
-    fn clone(&self) -> Self {
-        Graph {
-            adj_lists_head: self.adj_lists_head.clone(),
-            ranges_head: self.ranges_head.clone(),
-        }
-    }
+    pub adj_lists: Vec<Option<Box<Cell>>>,
+    pub ranges: Option<Box<Range>>,
+    pub num_cells: usize,
 }
 
 impl Graph {
     pub fn new(num_cells: usize) -> Self {
-        let mut adj_lists_head = Vec::with_capacity(num_cells);
-        for _ in 0..num_cells {
-            adj_lists_head.push(None);
-        }
-        Graph {
-            adj_lists_head,
-            ranges_head: None,
+        Self {
+            adj_lists: vec![None; num_cells],
+            ranges: None,
+            num_cells,
         }
     }
 
-
-    pub fn add_formula(&mut self, cell: i32, c1: i32, c2: i32, op_type: i32, formula_array: &mut [Formula]) {
-        let mut new_formula = Formula {
-            op_type,
-            op_info1: -1,
-            op_info2: -1,
-        };
-        if op_type == 0 {
-            new_formula.op_info1 = c1;
-        } else {
-            new_formula.op_info1 = c1;
-            new_formula.op_info2 = c2;
-        }
-        formula_array[cell as usize] = new_formula;
+    pub fn add_cell(cell: usize) -> Option<Box<Cell>> {
+        Some(Box::new(Cell { cell, next: None }))
     }
 
-    fn add_node(cell: i32) -> Box<GraphNode> {
-        Box::new(GraphNode {
-            cell,
-            next: None,
-        })
-    }
-
-    fn add_range(&mut self, start_cell: i32, end_cell: i32, dependent_cell: i32) -> Option<Box<Range>> {
+    pub fn add_range(start: usize, end: usize, dependent: usize) -> Option<Box<Range>> {
         Some(Box::new(Range {
-            start_cell,
-            end_cell,
-            dependent_cell,
-            next: self.ranges_head.take(),
+            start_cell: start,
+            end_cell: end,
+            dependent_cell: dependent,
+            next: None,
         }))
     }
 
-    pub fn add_edge(&mut self, cell1: i32, head_idx: usize) {
-        let head = &mut self.adj_lists_head[head_idx];
-        if head.is_none() {
-            self.adj_lists_head[head_idx] = Some(Self::add_node(cell1));
+    pub fn add_edge(&mut self, from: usize, to: usize) {
+        if self.has_edge(from, to) {
             return;
         }
-        let mut current = head.as_mut().unwrap();
-        if current.cell == cell1 {
-            return;
-        }
-        while let Some(ref mut next) = current.next {
-            if next.cell == cell1 {
-                return;
-            }
-            current = next;
-        }
-        current.next = Some(Self::add_node(cell1));
+        let new_cell = Box::new(Cell {
+            cell: to,
+            next: self.adj_lists[from].take(),
+        });
+        self.adj_lists[from] = Some(new_cell);
     }
 
-    pub fn add_range_to_graph(&mut self, start_cell: i32, end_cell: i32, dependent_cell: i32) {
-        if let Some(new_range) = self.add_range(start_cell, end_cell, dependent_cell) {
-            self.ranges_head = Some(new_range);
+    fn has_edge(&self, from: usize, to: usize) -> bool {
+        let mut current = &self.adj_lists[from];
+        while let Some(cell) = current {
+            if cell.cell == to {
+                return true;
+            }
+            current = &cell.next;
         }
+        false
     }
 
-    fn delete_node(&mut self, cell1: i32, head_idx: usize) {
-        let head = &mut self.adj_lists_head[head_idx];
-        if head.is_none() {
-            return;
-        }
-        if head.as_ref().unwrap().cell == cell1 {
-            self.adj_lists_head[head_idx] = head.as_mut().unwrap().next.take();
-            return;
-        }
-        let mut current = head.as_mut().unwrap();
-        while let Some(ref mut next) = current.next {
-            if next.cell == cell1 {
-                current.next = next.next.take();
-                return;
-            }
-            if next.next.is_none() {
+    pub fn delete_edge(&mut self, from: usize, to: usize) {
+        let mut head = self.adj_lists[from].take();
+        let mut dummy = Box::new(Cell { cell: 0, next: head });
+        let mut prev = &mut dummy;
+
+        while let Some(mut node) = prev.next.take() {
+            if node.cell == to {
+                prev.next = node.next.take();
                 break;
+            } else {
+                prev.next = Some(node);
+                prev = prev.next.as_mut().unwrap();
             }
-            current = current.next.as_mut().unwrap();
         }
+
+        self.adj_lists[from] = dummy.next;
     }
 
-    
-    
-//     void DeleteRangeFromGraph(Graph *graph, int dependentCell)
-// {
-//     Range *current = graph->ranges_head;
-//     Range *prev = NULL;
-
-//     while (current != NULL)
-//     {
-//         if (current->dependentCell == dependentCell)
-//         {
-//             // Remove this range
-//             if (prev == NULL)
-//             {
-//                 // It's the head node
-//                 graph->ranges_head = current->next;
-//                 free(current);
-//                 current = graph->ranges_head;
-//             }
-//             else
-//             {
-//                 // Middle or end node
-//                 prev->next = current->next;
-//                 free(current);
-//                 current = prev->next;
-//             }
-//         }
-//         else
-//         {
-//             prev = current;
-//             current = current->next;
-//         }
-//     }
-// }
-
-pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
-    let mut current = &mut self.ranges_head;
-
-    while current.is_some() {
-        let should_remove = current.as_ref().unwrap().dependent_cell == dependent_cell;
-    
-        if should_remove {
-            let next = current.as_mut().unwrap().next.take();
-            *current = next;
-            break;
-        } else {
-            current = &mut current.as_mut().unwrap().next;
+    pub fn add_range_to_graph(&mut self, start: usize, end: usize, dependent: usize) {
+        let mut new_range = Self::add_range(start, end, dependent);
+        if let Some(ref mut r) = new_range {
+            r.next = self.ranges.take();
         }
-    }
-    
-}
-
-
-    pub fn delete_edge(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
-        let x = formula_array[cell as usize];
-        match x.op_type {
-            -1 => self.delete_node(cell, x.op_info1 as usize),
-            1..=4 => self.delete_node(cell, x.op_info1 as usize),
-            5..=8 => {
-                self.delete_node(cell, x.op_info1 as usize);
-                self.delete_node(cell, x.op_info2 as usize);
-            }
-            9..=13 => self.delete_range_from_graph(cell),
-            14 => self.delete_node(cell, x.op_info1 as usize),
-            15 => self.delete_node(cell, x.op_info2 as usize),
-            _ => {}
-        }
+        self.ranges = new_range;
     }
 
-    pub fn add_edge_formula(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
-        let x = formula_array[cell as usize];
-        match x.op_type {
-            -1 => self.add_edge(cell, x.op_info1 as usize),
-            1..=4 => self.add_edge(cell, x.op_info1 as usize),
-            5..=8 => {
-                self.add_edge(cell, x.op_info1 as usize);
-                self.add_edge(cell, x.op_info2 as usize);
-            }
-            9..=13 => {
-                let start_cell = x.op_info1;
-                let end_cell = x.op_info2;
-                self.add_range_to_graph(start_cell, end_cell, cell);
-            }
-            14 => {
-                if x.op_info1 != cell {
-                    self.add_edge(cell, x.op_info1 as usize);
+    pub fn delete_range(&mut self, dependent: usize) {
+        let mut prev: *mut Option<Box<Range>> = &mut self.ranges;
+        unsafe {
+            while let Some(ref mut current) = *prev {
+                if current.dependent_cell == dependent {
+                    *prev = current.next.take();
+                } else {
+                    prev = &mut current.next;
                 }
             }
-            15 => self.add_edge(cell, x.op_info2 as usize),
-            _ => {}
         }
     }
 
-    fn dfs(&self, cell: i32, visited: &mut [bool], on_stack: &mut [bool], result: &mut Vec<i32>, has_cycle: &mut bool, cols: i32) {
+    pub fn add_formula(graph: &mut Graph, cell: usize, c1: usize, c2: usize, op_type: i32, formula_array: &mut [Formula]) {
+        formula_array[cell] = Formula {
+            op_type,
+            op_info1: c1 as i32,
+            op_info2: c2 as i32,
+        };
+    }
+
+    pub fn arithmetic_eval2(v1: i32, v2: i32, op: char) -> i32 {
+        match op {
+            '+' => v1 + v2,
+            '-' => v1 - v2,
+            '*' => v1 * v2,
+            '/' if v2 != 0 => v1 / v2,
+            _ => i32::MIN,
+        }
+    }
+
+    pub fn topo_sort_from_cell(
+        &self,
+        start: usize,
+        cols: usize,
+        visited: &mut Vec<bool>,
+        on_stack: &mut Vec<bool>,
+        stack: &mut Vec<usize>,
+        formula_array: &[Formula],
+        has_cycle: &mut bool,
+    ) {
         if *has_cycle {
             return;
         }
-        visited[cell as usize] = true;
-        on_stack[cell as usize] = true;
-        let mut current = &self.adj_lists_head[cell as usize];
-        while let Some(node) = current.as_ref() {
-            let dependent = node.cell;
-            if !visited[dependent as usize] {
-                self.dfs(dependent, visited, on_stack, result, has_cycle, cols);
-            } else if on_stack[dependent as usize] {
+
+        visited[start] = true;
+        on_stack[start] = true;
+
+        let mut current = &self.adj_lists[start];
+        while let Some(node) = current {
+            let dep = node.cell;
+            if !visited[dep] {
+                self.topo_sort_from_cell(dep, cols, visited, on_stack, stack, formula_array, has_cycle);
+            } else if on_stack[dep] {
                 *has_cycle = true;
-                return;
-            }
-            if *has_cycle {
                 return;
             }
             current = &node.next;
         }
-        let mut range = &self.ranges_head;
-        while let Some(r) = range.as_ref() {
-            let start_cell = r.start_cell;
-            let end_cell = r.end_cell;
-            let dependent = r.dependent_cell;
-            let start_row = start_cell / cols;
-            let start_col = start_cell % cols;
-            let end_row = end_cell / cols;
-            let end_col = end_cell % cols;
-            let (start_row, end_row) = if start_row > end_row { (end_row, start_row) } else { (start_row, end_row) };
-            let (start_col, end_col) = if start_col > end_col { (end_col, start_col) } else { (start_col, end_col) };
-            let cell_row = cell / cols;
-            let cell_col = cell % cols;
-            if cell_row >= start_row && cell_row <= end_row && cell_col >= start_col && cell_col <= end_col {
-                if !visited[dependent as usize] {
-                    self.dfs(dependent, visited, on_stack, result, has_cycle, cols);
-                } else if on_stack[dependent as usize] {
+
+        let mut range = &self.ranges;
+        while let Some(r) = range {
+            let sr = r.start_cell / cols;
+            let sc = r.start_cell % cols;
+            let er = r.end_cell / cols;
+            let ec = r.end_cell % cols;
+            let row = start / cols;
+            let col = start % cols;
+
+            if row >= sr && row <= er && col >= sc && col <= ec {
+                if !visited[r.dependent_cell] {
+                    self.topo_sort_from_cell(r.dependent_cell, cols, visited, on_stack, stack, formula_array, has_cycle);
+                } else if on_stack[r.dependent_cell] {
                     *has_cycle = true;
                     return;
                 }
-                if *has_cycle {
-                    return;
-                }
             }
+
             range = &r.next;
         }
-        on_stack[cell as usize] = false;
-        result.push(cell);
+
+        on_stack[start] = false;
+        stack.push(start);
     }
 
-    pub fn topo_sort_from_cell(&self, start_cell: i32, cols: i32, state: &mut State) -> Result<Vec<i32>, &'static str> {
-        let mut visited = vec![false; state.num_cells];
-        let mut on_stack = vec![false; state.num_cells];
-        let mut result = Vec::new();
-        let mut has_cycle = false;
-        self.dfs(start_cell, &mut visited, &mut on_stack, &mut result, &mut has_cycle, cols);
-        if has_cycle {
-            state.has_cycle = true;
-            return Err("Circular dependency detected");
+    pub fn recalc(
+        &mut self,
+        cols: usize,
+        arr: &mut [i32],
+        start_cell: usize,
+        formula_array: &mut [Formula],
+        has_cycle: &mut bool,
+    ) {
+        let mut visited = vec![false; self.num_cells];
+        let mut on_stack = vec![false; self.num_cells];
+        let mut stack = Vec::new();
+
+        self.topo_sort_from_cell(start_cell, cols, &mut visited, &mut on_stack, &mut stack, formula_array, has_cycle);
+
+        if *has_cycle {
+            return;
         }
-        result.reverse();
-        Ok(result)
-    }
 
-    pub fn recalc(&self, cols: i32, arr: &mut [Cell], start_cell: i32, formula_array: &[Formula], state: &mut State) -> Result<(), &'static str> {
-        let sorted_cells = self.topo_sort_from_cell(start_cell, cols, state)?;
-        for &cell in &sorted_cells {
-            let f = formula_array[cell as usize];
-            match f.op_type {
-                -1 => { // for cell = cell
-                    let v1 = arr[f.op_info1 as usize].clone();
-                    
-                    if !v1.is_valid {
-                        // println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
-                        arr[cell as usize] = Cell::invalid();
-                        continue;
-                    }
-                    // let op = match f.op_type {
-                    //     1 => '+',
-                    //     2 => '-',
-                    //     3 => '*',
-                    //     4 => '/',
-                    //     _ => unreachable!(),
-                    // };
-                    arr[cell as usize] = v1;
+        while let Some(cell) = stack.pop() {
+            let formula = formula_array[cell];
+            match formula.op_type {
+                0 => {
+                    arr[cell] = formula.op_info1;
                 }
-                0 => arr[cell as usize] = Cell::new_int(f.op_info1),
+            
                 1..=4 => {
-                    let v1 = arr[f.op_info1 as usize].clone();
-                    let v2 = Cell::new_int(f.op_info2);
-                    
-                    if !v1.is_valid {
-                        // println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
-                        arr[cell as usize] = Cell::invalid();
-                        continue;
+                    let v1 = arr[formula.op_info1 as usize];
+                    let v2 = formula.op_info2;
+                    if v1 == i32::MIN || (formula.op_type == 4 && v2 == 0) {
+                        arr[cell] = i32::MIN;
+                    } else {
+                        let op = match formula.op_type {
+                            1 => '+',
+                            2 => '-',
+                            3 => '*',
+                            4 => '/',
+                            _ => '?',
+                        };
+                        arr[cell] = Graph::arithmetic_eval2(v1, v2, op);
                     }
-                    let op = match f.op_type {
-                        1 => '+',
-                        2 => '-',
-                        3 => '*',
-                        4 => '/',
-                        _ => unreachable!(),
-                    };
-                    arr[cell as usize] = arithmetic_eval(v1, v2, op);
                 }
+            
                 5..=8 => {
-                    let v1 = arr[f.op_info1 as usize].clone();
-                    let v2 = arr[f.op_info2 as usize].clone();
-                    if !v1.is_valid || !v2.is_valid {
-                        // println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
-                        // println!("Invalid value for cell {}: {:?}", f.op_info2, v2);
-                        arr[cell as usize] = Cell::invalid();
-                        continue;
+                    let v1 = arr[formula.op_info1 as usize];
+                    let v2 = arr[formula.op_info2 as usize];
+                    if v1 == i32::MIN || v2 == i32::MIN || (formula.op_type == 8 && v2 == 0) {
+                        arr[cell] = i32::MIN;
+                    } else {
+                        let op = match formula.op_type {
+                            5 => '+',
+                            6 => '-',
+                            7 => '*',
+                            8 => '/',
+                            _ => '?',
+                        };
+                        arr[cell] = Graph::arithmetic_eval2(v1, v2, op);
                     }
-                    let op = match f.op_type {
-                        5 => '+',
-                        6 => '-',
-                        7 => '*',
-                        8 => '/',
-                        _ => unreachable!(),
-                    };
-                    arr[cell as usize] = arithmetic_eval(v1, v2, op);
                 }
+            
                 9..=13 => {
-                    let start_cell = f.op_info1;
-                    let end_cell = f.op_info2;
+                    let start_cell = formula.op_info1 as usize;
+                    let end_cell = formula.op_info2 as usize;
+
                     let start_row = start_cell / cols;
                     let start_col = start_cell % cols;
                     let end_row = end_cell / cols;
                     let end_col = end_cell % cols;
-                    let (start_row, end_row) = if start_row > end_row { (end_row, start_row) } else { (start_row, end_row) };
-                    let (start_col, end_col) = if start_col > end_col { (end_col, start_col) } else { (start_col, end_col) };
-                    let mut sum = 0.0;
+
+                    // Optimize by swapping if start > end
+                    let (start_row, end_row) = if start_row > end_row {
+                        (end_row, start_row)
+                    } else {
+                        (start_row, end_row)
+                    };
+                    let (start_col, end_col) = if start_col > end_col {
+                        (end_col, start_col)
+                    } else {
+                        (start_col, end_col)
+                    };
+
+                    let mut sum = 0;
                     let mut count = 0;
-                    let mut min_val = f64::MAX;
-                    let mut max_val = f64::MIN;
+                    let mut min_val = i32::MAX;
+                    let mut max_val = i32::MIN;
                     let mut has_error = false;
-                    let mut values = Vec::new();
-                    'outer: for row in start_row..=end_row {
+                    let mut values = vec![];
+
+                    // First pass: Calculate sum, min, max and check for errors
+                    for row in start_row..=end_row {
                         for col in start_col..=end_col {
                             let idx = row * cols + col;
-                            let val = &arr[idx as usize];
-                            if !val.is_valid {
+                            let val = arr[idx];
+
+                            if val == i32::MIN {
                                 has_error = true;
-                                break 'outer;
+                                break;
                             }
-                            match &val.value {
-                                CellValue::Int(i) => {
-                                    let v = *i as f64;
-                                    sum += v;
-                                    count += 1;
-                                    min_val = min_val.min(v);
-                                    max_val = max_val.max(v);
-                                    values.push(v);
-                                }
-                                CellValue::Float(f) => {
-                                    sum += *f;
-                                    count += 1;
-                                    min_val = min_val.min(*f);
-                                    max_val = max_val.max(*f);
-                                    values.push(*f);
-                                }
-                                CellValue::String(_) => {
-                                    has_error = true;
-                                    break 'outer;
-                                }
-                            }
+
+                            sum += val;
+                            count += 1;
+                            min_val = min_val.min(val);
+                            max_val = max_val.max(val);
+                            values.push(val);
+                        }
+                        if has_error {
+                            break;
                         }
                     }
+
                     if has_error || count == 0 {
-                        // println!("Invalid range for cell {}: {:?}", cell, arr[cell as usize]);
-                        arr[cell as usize] = Cell::invalid();
-                        continue;
+                        arr[cell] = i32::MIN;
+                    } else {
+                        arr[cell] = match formula.op_type {
+                            9 => min_val, // MIN
+                            10 => max_val, // MAX
+                            11 => sum / count, // AVG
+                            12 => sum, // SUM
+                            13 => { // STDEV
+                                let mean = sum as f64 / count as f64;
+                                let variance = values.iter().map(|&x| {
+                                    let diff = x as f64 - mean;
+                                    diff * diff
+                                }).sum::<f64>() / count as f64;
+                                variance.sqrt().round() as i32
+                            }
+                            _ => i32::MIN,
+                        };
                     }
-                    arr[cell as usize] = match f.op_type {
-                        9 => if min_val.fract() == 0.0 { Cell::new_int(min_val as i32) } else { Cell::new_float(min_val) },
-                        10 => if max_val.fract() == 0.0 { Cell::new_int(max_val as i32) } else { Cell::new_float(max_val) },
-                        11 => {
-                            let avg = sum / count as f64;
-                            if avg.fract() == 0.0 { Cell::new_int(avg as i32) } else { Cell::new_float(avg) }
-                        }
-                        12 => if sum.fract() == 0.0 { Cell::new_int(sum as i32) } else { Cell::new_float(sum) },
-                        13 => {
-                            let mean = sum / count as f64;
-                            let variance = values.iter().map(|&x| (x - mean) * (x - mean)).sum::<f64>() / count as f64;
-                            let stdev = variance.sqrt();
-                            if stdev.fract() == 0.0 { Cell::new_int(stdev as i32) } else { Cell::new_float(stdev) }
-                        }
-                        _ => unreachable!(),
-                    };
                 }
                 14 => {
-                    let mut sleep_value = arr[f.op_info1 as usize].clone();
-                    if f.op_info1 == cell {
-                        sleep_value = Cell::new_int(f.op_info2);
-                    }
-                    if !sleep_value.is_valid {
-                        // println!("Invalid value for cell {}: {:?}", f.op_info1, sleep_value);
-                        arr[cell as usize] = Cell::invalid();
-                        continue;
-                    }
-                    if let CellValue::Int(val) = sleep_value.value {
-                        if val > 0 {
-                            sleep(Duration::from_secs(val as u64));
+                    let v = if formula.op_info1 as usize == cell {
+                        formula.op_info2
+                    } else {
+                        arr[formula.op_info1 as usize]
+                    };
+            
+                    if v == i32::MIN {
+                        arr[cell] = i32::MIN;
+                    } else {
+                        if v > 0 {
+                            // println!("Sleeping for {} seconds 3", v);
+                            std::thread::sleep(std::time::Duration::from_secs(v as u64));
                         }
+                        arr[cell] = v;
                     }
-                    arr[cell as usize] = sleep_value;
                 }
+            
                 15 => {
-                    let v1 = Cell::new_int(f.op_info1);
-                    let v2 = arr[f.op_info2 as usize].clone();
-                    if !v2.is_valid {
-                        // println!("Invalid value for cell {}: {:?}", f.op_info2, v2);
-                        arr[cell as usize] = Cell::invalid();
-                        continue;
+                    let v1 = formula.op_info1;
+                    let v2 = arr[formula.op_info2 as usize];
+                    if v2 == i32::MIN || (v2 == 0 && formula.op_type == 4) {
+                        arr[cell] = i32::MIN;
+                    } else {
+                        let op = '/'; // op_type 15 is used for CONSTANT / CELL
+                        arr[cell] = Graph::arithmetic_eval2(v1, v2, op);
                     }
-                    arr[cell as usize] = arithmetic_eval(v1, v2, '/');
                 }
-                16 => {
-                    // Do nothing — string is already assigned in arr, skip overwriting
-                }
-                17 =>{
-                    //Do nothing - float is already assigned 
-                }
-                
+            
                 _ => {
-                    // println!("Invalid formula type for cell {}: {:?}", cell, f.op_type); ;
-                 arr[cell as usize] = Cell::invalid()},
+                    arr[cell] = i32::MIN;
+                }
             }
-        }
-        Ok(())
-    }
-}
-
-impl Drop for Graph {
-    fn drop(&mut self) {}
-}
-
-
-#[derive(Default, Clone)]
-pub struct State {
-    pub old_value: Cell,
-    pub old_op_type: i32,
-    pub old_op_info1: i32,
-    pub old_op_info2: i32,
-    pub has_cycle: bool,
-    pub num_cells: usize,
-}
-
-impl State {
-    pub fn new() -> Self {
-        State {
-            old_value: Cell::invalid(),
-            old_op_type: 0,
-            old_op_info1: 0,
-            old_op_info2: 0,
-            has_cycle: false,
-            num_cells: 0,
+            
         }
     }
 }
-#[derive(Clone)]
-pub struct StateSnapshot {
-    pub arr: Vec<Cell>,
-    pub formula_array: Vec<Formula>,
-    pub graph: Graph,
+impl Clone for Cell {
+    fn clone(&self) -> Self {
+        Self {
+            cell: self.cell,
+            next: self.next.clone(),
+        }
+    }
+}
+
+impl Clone for Range {
+    fn clone(&self) -> Self {
+        Self {
+            start_cell: self.start_cell,
+            end_cell: self.end_cell,
+            dependent_cell: self.dependent_cell,
+            next: self.next.clone(),
+        }
+    }
 }
