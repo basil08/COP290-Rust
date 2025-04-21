@@ -6,6 +6,8 @@ EXECUTABLE = spreadsheet
 # Default arguments for the CLI for easy debugging
 ARGS ?= 100 100
 
+PORT ?= 8080
+
 # Default target
 all: build
 
@@ -17,8 +19,12 @@ build:
 run: build
 	./$(BUILD_DIR)/release/$(EXECUTABLE) $(ARGS)
 
-web:
-	cd frontend && trunk serve --open
+server:
+	cd dummy_server && cargo run
+
+client:
+	@echo "Serving on port $(PORT)..."
+	cd frontend && trunk serve --port $(PORT) 
 
 # Clean the build artifacts
 clean:
