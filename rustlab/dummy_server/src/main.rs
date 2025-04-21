@@ -18,7 +18,7 @@ struct Sheet {
 
 async fn get_sheet() -> Json<Sheet> {
     let sheet = Sheet {
-        data: vec![vec![Cell { value: "42".into() }; 5]; 5],
+        data: vec![vec![Cell { value: "0".into() }; 10]; 10],
     };
     Json(sheet)
 }
