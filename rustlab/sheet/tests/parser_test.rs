@@ -1,4 +1,4 @@
-use sheet::parser::{cell_parser, value_func};
+use sheet::parser::{cell_parser};
 
 #[test]
 fn test_cell_parser(){
