@@ -2,3 +2,8 @@ pub mod display;
 pub mod function;
 pub mod graph;
 pub mod parser;
+pub mod util_ext;
+pub mod display_ext;
+pub mod function_ext;
+pub mod graph_ext;
+pub mod parser_ext;
