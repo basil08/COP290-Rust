@@ -3,7 +3,10 @@ use gloo::net::http::Request;
 use wasm_bindgen_futures::spawn_local;
 use gloo::console::log;
 
+// mod cell_component;
+
 use crate::models::{Cell, Sheet};
+use crate::cell_component::CellComponent;
 
 #[function_component(TableComponent)]
 pub fn table_component() -> Html {
@@ -18,30 +21,22 @@ pub fn table_component() -> Html {
             spawn_local(async move {
                 match Request::get("http://127.0.0.1:3001/sheet").send().await {
                     Ok(response) => {
-                        log!("Got response with status:", response.status());
                         if response.status() == 200 {
                             match response.json::<Sheet>().await {
                                 Ok(sheet) => {
-                                    log!("Successfully parsed sheet data");
                                     sheet_state.set(Some(sheet));
                                     error_state.set(None);
                                 },
                                 Err(e) => {
-                                    let err_msg = format!("Failed to parse response: {}", e);
-                                    log!(err_msg.clone());
-                                    error_state.set(Some(err_msg));
+                                    error_state.set(Some(format!("Parse error: {}", e)));
                                 }
                             }
                         } else {
-                            let err_msg = format!("Server returned error: {}", response.status());
-                            log!(err_msg.clone());
-                            error_state.set(Some(err_msg));
+                            error_state.set(Some(format!("Server error: {}", response.status())));
                         }
                     },
                     Err(e) => {
-                        let err_msg = format!("Request failed: {}", e);
-                        log!(err_msg.clone());
-                        error_state.set(Some(err_msg));
+                        error_state.set(Some(format!("Request failed: {}", e)));
                     }
                 }
             });
@@ -53,27 +48,20 @@ pub fn table_component() -> Html {
         <div>
         {
             if let Some(error) = &*error_state {
-                html! {
-                    <div style="color: red; padding: 10px; border: 1px solid red; margin-bottom: 10px;">
-                        <p><strong>{"Error: "}</strong>{error}</p>
-                    </div>
-                }
-            } else {
-                html! {}
-            }
-        }
-        {
-            if let Some(sheet) = &*sheet_state {
+                html! { <p style="color: red;">{ error }</p> }
+            } else if let Some(sheet) = &*sheet_state {
                 html! {
                     <table style="border-collapse: collapse; width: 100%; text-align: center;">
                         <thead>
                             <tr>
                                 <th style="border: 1px solid #ccc; padding: 8px;">{ "↘" }</th>
-                                { (0..sheet.data[0].len()).map(|c| html! {
-                                    <th style="border: 1px solid #ccc; padding: 8px; background:rgb(7, 188, 152);">
-                                        { column_label(c) }
-                                    </th>
-                                }).collect::<Html>() }
+                                {
+                                    (0..sheet.data[0].len()).map(|c| html! {
+                                        <th style="border: 1px solid #ccc; padding: 8px; background:rgb(7, 188, 152);">
+                                            { column_label(c) }
+                                        </th>
+                                    }).collect::<Html>()
+                                }
                             </tr>
                         </thead>
                         <tbody>
@@ -81,15 +69,16 @@ pub fn table_component() -> Html {
                                 sheet.data.iter().enumerate().map(|(r, row)| {
                                     html! {
                                         <tr>
-                                            <td style="border: 1px solid #ccc; padding: 8px; background:rgb(7, 188, 152);">
-                                                { r + 1 }
-                                            </td>
+                                            <td style="border: 1px solid #ccc; padding: 8px; background:rgb(7, 188, 152);">{ r + 1 }</td>
                                             {
-                                                row.iter().map(|cell| {
+                                                row.iter().enumerate().map(|(c, cell)| {
                                                     html! {
-                                                        <td style="border: 1px solid #ccc; padding: 8px;">
-                                                            { &cell.value }
-                                                        </td>
+                                                        <CellComponent
+                                                                value={cell.value.clone()}
+                                                                row_id={r.to_string()}
+                                                                column_id={c.to_string()}
+                                                                api_url={"http://127.0.0.1:3001/update-cell".to_string()}
+                                                        />  
                                                     }
                                                 }).collect::<Html>()
                                             }
@@ -101,22 +90,20 @@ pub fn table_component() -> Html {
                     </table>
                 }
             } else {
-                html! { <p>{ "Loading sheet..." }</p> }
+                html! { <p>{ "Loading..." }</p> }
             }
         }
         </div>
     }
 }
 
-pub fn column_label(column: usize) -> String {
+pub fn column_label(mut index: usize) -> String {
     let mut label = String::new();
-    let mut index = column + 1;  // Convert to 1-based index
-    
+    index += 1;
     while index > 0 {
-        let remainder = (index - 1) % 26;
-        label.insert(0, (b'A' + remainder as u8) as char);
-        index = (index - 1) / 26;
+        index -= 1;
+        label.insert(0, (b'A' + (index % 26) as u8) as char);
+        index /= 26;
     }
-    
     label
 }

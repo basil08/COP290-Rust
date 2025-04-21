@@ -1,12 +1,12 @@
 use yew::prelude::*;
 
 mod table_component;
-// mod row_component;
-// mod cell_component;
+mod cell_component; // Use your local cell component
 mod models; // Make sure this is included
 
 use table_component::TableComponent;
-use models::{Cell, Sheet}; // Use your local models
+// use cell_component::CellComponent; // Use your local cell component
+// use models::{Cell, Sheet}; // Use your local models
 
 #[function_component(App)]
 fn app() -> Html {
@@ -19,6 +19,8 @@ fn app() -> Html {
 }
 
 fn main() {
+    wasm_logger::init(wasm_logger::Config::default());
+    gloo::utils::document().set_title("Rust Spreadsheet");
     console_error_panic_hook::set_once(); // Add this for better error reporting
     yew::Renderer::<App>::new().render();
 }
