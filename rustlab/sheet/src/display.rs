@@ -1,78 +1,62 @@
-use std::cmp::min;
-use crate::function::{Cell, CellValue};
-use crate::parser::cell_parser;
-use crate::graph::Graph;
+// display.rs
 
-pub fn printer(currx: i32, curry: i32, arr: &[Cell], c: i32, r: i32) {
+use crate::graph::Graph;
+use std::cmp::{max, min};
+use std::i32;
+
+pub fn printer(currx: usize, curry: usize, arr: &[i32], c: usize, r: usize) {
     print!("      ");
 
-    let display_cols = min(10, c - currx);
-    for i in 0..display_cols {
+    let visible_cols = min(10, c.saturating_sub(currx));
+    for i in 0..visible_cols {
         let mut val = currx + i + 1;
-        let mut chars: Vec<char> = Vec::new();
-        
-        while val > 0 {
+        let mut s = Vec::new();
+
+        while val > 0 && s.len() < 6 {
             val -= 1;
-            chars.push((b'A' + (val % 26) as u8) as char);
+            s.push((b'A' + (val % 26) as u8) as char);
             val /= 26;
         }
-        
-        let header: String = chars.into_iter().rev().collect();
-        print!("{:<10}", header);
+        s.reverse();
+        print!("{:<10}", s.iter().collect::<String>());
     }
     println!();
 
-    let display_rows = min(10, r - curry);
-    for j in 0..display_rows {
+    let visible_rows = min(10, r.saturating_sub(curry));
+    for j in 0..visible_rows {
         print!("{:<3}   ", curry + j + 1);
-        
-        for i in 0..display_cols {
-            let value = &arr[((currx + i) + c * (curry + j)) as usize];
-            if !value.is_valid {
+        for i in 0..visible_cols {
+            let idx = (currx + i) + c * (curry + j);
+            let value = arr[idx];
+            if value == i32::MIN {
                 print!("{:<10}", "ERR");
             } else {
-                match &value.value {
-                    CellValue::Int(i) => print!("{:<10}", i),
-                    CellValue::Float(f) => print!("{:<10.2}", f),
-                    CellValue::String(s) => {
-                        // Truncate the string if it's longer than 10 characters
-                        let truncated = if s.len() > 10 {
-                            format!("{:.10}", &s[..10])
-                        } else {
-                            s.clone()
-                        };
-                        print!("{:<10}", truncated);
-                    }
-                }
+                print!("{:<10}", value);
             }
         }
         println!();
     }
 }
 
-pub fn scroller(a: &str, _arr: &[Cell], currx: &mut i32, curry: &mut i32, c: i32, r: i32, _graph: &Graph) -> Result<(), &'static str> {
-    let mut flag = false;
-    
+pub fn scroller(
+    a: &str,
+    _arr: &mut [i32],
+    currx: &mut usize,
+    curry: &mut usize,
+    c: usize,
+    r: usize,
+    graph: &mut Graph,
+) -> i32 {
     match a {
         "w" => {
             if *curry < 10 {
                 if *curry > 0 {
                     *curry = 0;
                 } else {
-                    flag = true;
+                    return 0;
                 }
             } else {
                 *curry -= 10;
-            }
-        }
-        "d" => {
-            let remaining_cols = c - *currx - 10;
-            if remaining_cols <= 0 {
-                flag = true;
-            } else if remaining_cols < 10 {
-                *currx += remaining_cols;
-            } else {
-                *currx += 10;
             }
         }
         "a" => {
@@ -80,47 +64,45 @@ pub fn scroller(a: &str, _arr: &[Cell], currx: &mut i32, curry: &mut i32, c: i32
                 if *currx > 0 {
                     *currx = 0;
                 } else {
-                    flag = true;
+                    return 0;
                 }
             } else {
                 *currx -= 10;
             }
         }
         "s" => {
-            let remaining_rows = r - *curry - 10;
-            if remaining_rows <= 0 {
-                flag = true;
-            } else if remaining_rows < 10 {
-                *curry += remaining_rows;
+            let remaining_rows = r.saturating_sub(*curry + 10);
+            if remaining_rows == 0 {
+                return 0;
             } else {
-                *curry += 10;
+                *curry += min(10, remaining_rows);
             }
         }
-        s if s.starts_with("scroll_to ") => {
-            let parts: Vec<&str> = s[9..].split_whitespace().collect();
-            if parts.len() != 1 {
-                return Err("Invalid scroll_to format");
-            }
-            let cell = cell_parser(parts[0], c, r, 0, parts[0].len() - 1)?;
-            if cell < 0 || cell >= (c * r) {
-                flag = true;
+        "d" => {
+            let remaining_cols = c.saturating_sub(*currx + 10);
+            if remaining_cols == 0 {
+                return 0;
             } else {
-                let start_row = cell / c;
-                let start_col = cell % c;
-                if start_row >= r || start_col >= c {
-                    flag = true;
+                *currx += min(10, remaining_cols);
+            }
+        }
+        _ if a.starts_with("scroll_to ") => {
+            if let Some(cell) = crate::parser::cell_parser(a, c, r, 10, a.len() - 1, graph) {
+                let row = cell / c;
+                let col = cell % c;
+
+                if row < r && col < c {
+                    *currx = col;
+                    *curry = row;
                 } else {
-                    *currx = start_col;
-                    *curry = start_row;
+                    return -1;
                 }
+            } else {
+                return -1;
             }
         }
-        _ => return Err("Unknown scroll command"),
+        _ => return -1,
     }
 
-    if flag {
-        // Invalid scroll, no change
-    }
-    Ok(())
+    0
 }
-
