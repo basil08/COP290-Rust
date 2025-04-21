@@ -58,25 +58,7 @@ fn extract_range_cells(a: &str, eq_idx: usize, c: usize, r: usize, graph: &mut G
     Some((range_start, range_end))
 }
 
-// pub fn min_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut [i32], graph: &mut Graph, formula_array: &mut [Formula]) -> i32 {
-//     let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
-//     let (range_start, range_end) = extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
-//     Graph::add_formula(graph, first_cell, range_start, range_end, 9, formula_array);
-//     graph.add_range_to_graph(range_start, range_end, first_cell);
-//     let (start_row, start_col) = (range_start / c, range_start % c);
-//     let (end_row, end_col) = (range_end / c, range_end % c);
 
-//     let mut min_val = arr[range_start];
-
-//     for row in start_row..=end_row {
-//         for col in start_col..=end_col {
-//             let idx = row * c + col;
-//             min_val = min(min_val, arr[idx]);
-//         }
-//     }
-//     arr[first_cell] = min_val;
-//     1
-// }
 pub fn min_func(
     a: &str, 
     c: usize, 
@@ -124,18 +106,6 @@ pub fn min_func(
     1
 }
 
-// pub fn max_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut [i32], graph: &mut Graph, formula_array: &mut [Formula]) -> i32 {
-//     let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
-//     let (range_start, range_end) = extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
-//     Graph::add_formula(graph, first_cell, range_start, range_end, 10, formula_array);
-//     graph.add_range_to_graph(range_start, range_end, first_cell);
-//     let mut max_val = arr[range_start];
-//     for idx in range_start..=range_end {
-//         max_val = max(max_val, arr[idx]);
-//     }
-//     arr[first_cell] = max_val;
-//     1
-// }
 pub fn max_func(
     a: &str, 
     c: usize, 
