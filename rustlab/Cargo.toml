@@ -2,6 +2,7 @@
 members = [
     "cli",
     "sheet",
-    "frontend"
+    "frontend",
+    "dummy_server"
 ]
 resolver = "2"
