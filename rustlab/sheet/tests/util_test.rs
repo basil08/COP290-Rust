@@ -1,4 +1,4 @@
-use sheet::util::{arithmetic_eval, return_optype};
+// use sheet::util::{arithmetic_eval, return_optype};
 use sheet::function::{Cell, CellValue};
 #[test]
 fn test_int_operations() {

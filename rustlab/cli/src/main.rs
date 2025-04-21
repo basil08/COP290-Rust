@@ -1,137 +1,109 @@
-use std::io::{self, Write};
-use std::env;
-use std::time::Instant;
-use graph::StateSnapshot;
-
-
+// main.rs
+use sheet::graph::{Graph, Formula};
 use sheet::display;
 use sheet::function;
-use sheet::graph;
 use sheet::parser;
-use sheet::util;
 
-use display::{printer, scroller};
-use function::Cell;
-use graph::{Graph, Formula, State};
-use parser::parser;
 
-fn create_snapshot(
-    arr: &Vec<Cell>,
-    formula_array: &Vec<Formula>,
-    graph: &Graph,
-) -> StateSnapshot {
-    StateSnapshot {
-        arr: arr.clone(),
-        formula_array: formula_array.clone(),
-        graph: graph.clone(),
-    }
-}
+// mod cli;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+use std::env;
+use std::io::{self, Write};
+use std::time::Instant;
+
+// use graph::{Graph, Formula};
+
+static mut NUM_CELLS: usize = 0;
+static mut HAS_CYCLE: bool = false;
+static mut INVALID_RANGE: bool = false;
+
+fn main() {
+    let start = Instant::now();
+
     let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
-        eprintln!("Usage: ./sheet <rows> <cols>");
-        std::process::exit(1);
+        println!("Usage: {} <rows> <columns>", args[0]);
+        return;
     }
-    let mut undo_stack: Vec<StateSnapshot> = Vec::new();
-let mut redo_stack: Vec<StateSnapshot> = Vec::new();
 
-    let rows: usize = args[1].parse().expect("Invalid number of rows");
-    let cols: usize = args[2].parse().expect("Invalid number of columns");
-    let num_cells = cols * rows;
-    let cols_i32: i32 = cols.try_into().unwrap();
-    let rows_i32: i32 = rows.try_into().unwrap();
+    let r: usize = args[1].parse().expect("Invalid row value");
+    let c: usize = args[2].parse().expect("Invalid column value");
 
-    let mut arr = vec![Cell::new_int(0); num_cells];
-    let mut formula_array = vec![Formula { op_type: 0, op_info1: -1, op_info2: -1 }; num_cells];
+    let num_cells = r * c;
+    unsafe { NUM_CELLS = num_cells; }
+
     let mut graph = Graph::new(num_cells);
-    let mut state = State::new();
+    let mut formula_array = vec![Formula::default(); num_cells];
+    let mut arr = vec![0; r * c];
+
     let mut currx = 0;
     let mut curry = 0;
-    let mut output_enabled = true;
+    let mut output_disabled = false;
 
-    if output_enabled {
-        printer(currx, curry, &arr, cols_i32, rows_i32);
+    if !output_disabled {
+        display::printer(currx, curry, &arr, c, r);
     }
-    print!("[0.0] (ok) > ");
+
+    print!("[{:.6}] (ok) ", start.elapsed().as_secs_f64());
+
+    let mut input = String::new();
+
     loop {
-        let start = Instant::now();
-        
+        print!("> ");
         io::stdout().flush().unwrap();
+        input.clear();
+        io::stdin().read_line(&mut input).unwrap();
 
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-        let input = input.trim();
+        let trimmed = input.trim();
 
-        if input == "q" {
+        if trimmed == "q" {
             break;
         }
 
-        let result = match input {
+        let loop_start = Instant::now();
+        let mut status = 1;
+
+        match trimmed {
             "disable_output" => {
-                output_enabled = false;
-                Ok(())
+                output_disabled = true;
+                print!("[{:.6}] (ok) ", loop_start.elapsed().as_secs_f64());
+                continue;
             }
             "enable_output" => {
-                output_enabled = true;
-                Ok(())
-            }
-            "w" | "a" | "s" | "d" => {
-                scroller(input, &arr, &mut currx, &mut curry, cols_i32, rows_i32, &graph)
-            }
-            _ if input.starts_with("scroll_to ") => {
-                let cmd = input.replacen("scroll_to ", "", 1);
-                scroller(&format!("scroll_to {}", cmd), &arr, &mut currx, &mut curry, cols_i32, rows_i32, &graph)
-            }
-            "undo" => {
-                if let Some(prev) = undo_stack.pop() {
-                    redo_stack.push(create_snapshot(&arr, &formula_array, &graph));
-                    arr = prev.arr;
-                    formula_array = prev.formula_array;
-                    graph = prev.graph;
-                    Ok(())
-                } else {
-                    Err("Nothing to undo")
-                }
-            }
-            "redo" => {
-                if let Some(next) = redo_stack.pop() {
-                    undo_stack.push(create_snapshot(&arr, &formula_array, &graph));
-                    arr = next.arr;
-                    formula_array = next.formula_array;
-                    graph = next.graph;
-                    Ok(())
-                } else {
-                    Err("Nothing to redo")
-                }
+                output_disabled = false;
+                display::printer(currx, curry, &arr, c, r);
+                print!("[{:.6}] (ok) ", loop_start.elapsed().as_secs_f64());
+                continue;
             }
             _ => {
-                // 🧠 Save snapshot before parsing a new command
-                undo_stack.push(create_snapshot(&arr, &formula_array, &graph));
-                if undo_stack.len() > 5 {
-                    undo_stack.remove(0);
+                if ['w', 'a', 's', 'd'].contains(&trimmed.chars().next().unwrap_or(' ')) || trimmed.starts_with("scroll_to ") {
+                    if display::scroller(trimmed, &mut arr, &mut currx, &mut curry, c, r, &mut graph) == -1 {
+                        status = -1;
+                    }
+                } else {
+                    status = parser::parser(trimmed, c, r, &mut arr, &mut graph, &mut formula_array);
                 }
-                redo_stack.clear(); // New action invalidates redo history
-        
-                parser(input, cols_i32, rows_i32, &mut arr, &mut graph, &mut formula_array, &mut state)
             }
-        };
-        
-        let elapsed = start.elapsed().as_secs_f32();
-        match result {
-            Ok(_) => {
-                if output_enabled {
-                    printer(currx, curry, &arr, cols_i32, rows_i32);
-                }
-                print!("[{:.1}] (ok) > ", elapsed);
-            }
-            Err(e) => {
-                if output_enabled {
-                    printer(currx, curry, &arr, cols_i32, rows_i32);
-                }
-                print!("[{:.1}] ({}) > ", elapsed, e);
+        }
+
+        if !output_disabled {
+            display::printer(currx, curry, &arr, c, r);
+        }
+
+        let elapsed = loop_start.elapsed().as_secs_f64();
+        unsafe {
+            if status > 0 {
+                print!("[{:.6}] (ok) ", elapsed);
+            } else if HAS_CYCLE {
+                print!("[{:.6}] (Circular dependency detected) ", elapsed);
+                HAS_CYCLE = false;
+            } else if INVALID_RANGE {
+                print!("[{:.6}] (Invalid range) ", elapsed);
+                INVALID_RANGE = false;
+            } else {
+                print!("[{:.6}] (unrecognized command) ", elapsed);
             }
         }
     }
-    Ok(())
 }
