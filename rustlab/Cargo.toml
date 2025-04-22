@@ -4,5 +4,5 @@ members = [
     "sheet",
     "frontend",
     "dummy_server"
-]
+, "server", "wasm-frontend"]
 resolver = "2"
