@@ -1,3 +1,7 @@
+mod graph;
+mod parser;
+
+use std::env;
 use axum::{
     routing::{get, post},
     extract::Json as ExtractJson,
@@ -24,6 +28,7 @@ struct UpdateCellRequest {
     row_id: String,
     column_id: String,
     value: String,
+    formula: String, // this will be parsed
 }
 
 // Define response for update operations
@@ -34,7 +39,7 @@ struct UpdateResponse {
 }
 
 // Create a shared state for the sheet data
-type AppState = Arc<RwLock<Sheet>>;
+type AppState = Arc<RwLock<Vec<i32>>>;
 
 async fn get_sheet(state: axum::extract::State<AppState>) -> Json<Sheet> {
     let sheet = state.read().await.clone();
@@ -67,7 +72,14 @@ async fn update_cell(
     };
 
     // Update the cell value in our sheet data
-    let mut sheet = state.write().await;
+    let mut graph = state.write().await;
+
+    let mut trimmed = payload.formula.trim();
+
+    let status = parser(trimmed, c, r, &mut arr, &mut graph, &mut formula_array[..]);
+
+
+
     
     // Check if the indices are valid
     if row_index >= sheet.data.len() || col_index >= sheet.data[0].len() {
@@ -90,12 +102,22 @@ async fn update_cell(
 #[tokio::main]
 async fn main() {
     // Initialize the sheet with default values
-    let initial_sheet = Sheet {
-        data: vec![vec![Cell { value: "0".into() }; 10]; 10],
-    };
+    // let initial_sheet = Sheet {
+    //     data: vec![vec![Cell { value: "0".into() }; 10]; 10],
+    // };
+
+    use graph::{Graph, Formula};
+    use parser::parser;
+    
+    let mut graph = Graph::new(100);
+    let mut formula_array = vec![Formula::default(); 100];
+    let mut arr = vec![0; 100];
+
+    let mut currx = 0;
+    let mut curry = 0;
     
     // Create the shared state
-    let app_state = Arc::new(RwLock::new(initial_sheet));
+    let app_state = Arc::new(RwLock::new(graph));
 
     // Create a CORS layer that allows any origin
     let cors = CorsLayer::new()
