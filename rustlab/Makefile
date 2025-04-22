@@ -26,6 +26,9 @@ client:
 	@echo "Serving on port $(PORT)..."
 	cd frontend && trunk serve --port $(PORT) 
 
+serve:
+	cd server && cargo run
+
 # Clean the build artifacts
 clean:
 	$(CARGO) clean
