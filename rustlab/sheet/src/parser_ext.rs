@@ -50,7 +50,7 @@ pub fn cell_parser(a: &str, c: i32, r: i32, start: usize, end: usize) -> Result<
 
 /// Try to recognise the pattern in the first four integers.
 /// Returns "AP" | "GP" | "FIB" | "CONST" or None.
-fn detect_pattern(base: &[i32]) -> Option<String> {
+pub fn detect_pattern(base: &[i32]) -> Option<String> {
     if base.len() < 4 { return None; }
     let [a, b, c, d] = [base[0], base[1], base[2], base[3]];
 
@@ -82,7 +82,7 @@ fn detect_pattern(base: &[i32]) -> Option<String> {
 }
 
 /// Produce the full sequence given the four‑element seed and pattern tag.
-fn generate_sequence(base: &[i32], pattern: &str, total_len: usize) -> Vec<i32> {
+pub fn generate_sequence(base: &[i32], pattern: &str, total_len: usize) -> Vec<i32> {
     let mut out = base.to_vec();
 
     match pattern {
@@ -112,7 +112,7 @@ fn generate_sequence(base: &[i32], pattern: &str, total_len: usize) -> Vec<i32> 
 }
 
 /// Autofill one column down to `length` rows.
-fn autofill(
+pub fn autofill(
     col_char: &str,
     length: usize,
     cols: i32,

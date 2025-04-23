@@ -5,29 +5,48 @@ use crate::function_ext::Cell;
 use crate::util_ext::arithmetic_eval;
 
 use crate::function_ext::CellValue;
-
+/// A compact formula representation for spreadsheet cells.
+///
+/// - `op_type`: The operation type (e.g., literal assignment, arithmetic, sum, avg, etc.).
+/// - `op_info1`: First operand (could be a cell index or constant).
+/// - `op_info2`: Second operand (used for binary ops or range end).
 #[derive(Clone, Copy)]
+
 pub struct Formula {
     pub op_type: i32,
     pub op_info1: i32,
     pub op_info2: i32,
 }
+/// A node in the adjacency list representing a dependency from one cell to another.
 
 #[derive(Clone)]
 pub struct GraphNode {
-    pub cell: i32,
+     /// The dependent cell.
+     pub cell: i32,
+     /// Pointer to the next dependency in the list.
     pub next: Option<Box<GraphNode>>,
 }
-
+/// A rectangular range in the spreadsheet and the cell it affects.
 #[derive(Clone)]
 pub struct Range {
+    /// Starting cell index of the range.
     pub start_cell: i32,
+    /// Ending cell index of the range.
     pub end_cell: i32,
+    /// Cell that depends on the values in this range.
     pub dependent_cell: i32,
+    /// Next range in the linked list.
     pub next: Option<Box<Range>>,
 }
+/// The core data structure representing dependencies between cells.
+///
+/// - Uses adjacency lists to represent single-cell dependencies.
+/// - Also maintains a linked list of range-based dependencies.
 pub struct Graph {
+    /// Heads of adjacency lists where each index corresponds to a cell.
     pub adj_lists_head: Vec<Option<Box<GraphNode>>>,
+    /// Head of a linked list representing all cell ranges with dependencies.
+   
     pub ranges_head: Option<Box<Range>>,
 }
 impl Clone for Graph {
@@ -40,6 +59,9 @@ impl Clone for Graph {
 }
 
 impl Graph {
+    /// Creates a new dependency graph for a spreadsheet with `num_cells` cells.
+///
+/// Initializes an adjacency list and empty range list.
     pub fn new(num_cells: usize) -> Self {
         let mut adj_lists_head = Vec::with_capacity(num_cells);
         for _ in 0..num_cells {
@@ -51,6 +73,12 @@ impl Graph {
         }
     }
 
+/// Adds a formula for a specific cell, recording the operation type and operands.
+///
+/// - `cell`: The index of the cell being assigned a formula.
+/// - `c1`, `c2`: Operands (cell references or constants).
+/// - `op_type`: Type of operation (e.g., addition, SUM, AVG, etc.).
+/// - `formula_array`: Mutable reference to the formula array.
 
     pub fn add_formula(&mut self, cell: i32, c1: i32, c2: i32, op_type: i32, formula_array: &mut [Formula]) {
         let mut new_formula = Formula {
@@ -82,6 +110,9 @@ impl Graph {
             next: self.ranges_head.take(),
         }))
     }
+/// Adds a single dependency edge to the graph from `cell1` to `head_idx`.
+///
+/// Ensures no duplicate edges.
 
     pub fn add_edge(&mut self, cell1: i32, head_idx: usize) {
         let head = &mut self.adj_lists_head[head_idx];
@@ -101,14 +132,16 @@ impl Graph {
         }
         current.next = Some(Self::add_node(cell1));
     }
+/// Adds a rectangular dependency range to the graph with the specified dependent cell.
 
     pub fn add_range_to_graph(&mut self, start_cell: i32, end_cell: i32, dependent_cell: i32) {
         if let Some(new_range) = self.add_range(start_cell, end_cell, dependent_cell) {
             self.ranges_head = Some(new_range);
         }
     }
+/// Deletes a single dependency node (edge) pointing from `cell1` in the list at `head_idx`.
 
-    fn delete_node(&mut self, cell1: i32, head_idx: usize) {
+   pub fn delete_node(&mut self, cell1: i32, head_idx: usize) {
         let head = &mut self.adj_lists_head[head_idx];
         if head.is_none() {
             return;
@@ -164,6 +197,9 @@ impl Graph {
 //         }
 //     }
 // }
+/// Deletes any range that affects `dependent_cell`.
+///
+/// Used for cleaning up graph dependencies on formula deletion.
 
 pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
     let mut current = &mut self.ranges_head;
@@ -182,6 +218,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
     
 }
 
+/// Removes all dependency edges associated with a given formula.
 
     pub fn delete_edge(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
         let x = formula_array[cell as usize];
@@ -198,6 +235,9 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
             _ => {}
         }
     }
+/// Rebuilds all dependency edges for the given formula.
+///
+/// Useful after modifying a formula or loading a snapshot.
 
     pub fn add_edge_formula(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
         let x = formula_array[cell as usize];
@@ -222,6 +262,15 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
             _ => {}
         }
     }
+/// Internal DFS used to perform topological sort and detect cycles.
+///
+/// Traverses standard dependencies and range-based dependencies.
+/// - `cell`: Current DFS node
+/// - `visited`: Whether cell has been visited
+/// - `on_stack`: DFS recursion stack flag
+/// - `result`: Output topologically sorted result
+/// - `has_cycle`: Set to true if a cycle is detected
+/// - `cols`: Number of spreadsheet columns
 
     fn dfs(&self, cell: i32, visited: &mut [bool], on_stack: &mut [bool], result: &mut Vec<i32>, has_cycle: &mut bool, cols: i32) {
         if *has_cycle {
@@ -272,6 +321,11 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
         on_stack[cell as usize] = false;
         result.push(cell);
     }
+/// Topologically sorts all cells reachable from `start_cell`.
+///
+/// Used before recalculation to ensure a valid execution order.
+///
+/// Returns an error if a circular dependency is detected.
 
     pub fn topo_sort_from_cell(&self, start_cell: i32, cols: i32, state: &mut State) -> Result<Vec<i32>, &'static str> {
         let mut visited = vec![false; state.num_cells];
@@ -286,6 +340,11 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
         result.reverse();
         Ok(result)
     }
+/// Recalculates all formulas reachable from `start_cell`
+/// in topological order based on the dependency graph.
+///
+/// Supports direct assignment, binary operations, range-based functions,
+/// and sleep-based side-effects.
 
     pub fn recalc(&self, cols: i32, arr: &mut [Cell], start_cell: i32, formula_array: &[Formula], state: &mut State) -> Result<(), &'static str> {
         let sorted_cells = self.topo_sort_from_cell(start_cell, cols, state)?;
@@ -461,18 +520,22 @@ impl Drop for Graph {
     fn drop(&mut self) {}
 }
 
-
+/// Tracks metadata and cycle detection state for formula recalculation.
 #[derive(Default, Clone)]
 pub struct State {
+    /// Previous value of the cell before recalculation.
     pub old_value: Cell,
     pub old_op_type: i32,
     pub old_op_info1: i32,
     pub old_op_info2: i32,
+    /// Whether a cycle was detected during traversal.
     pub has_cycle: bool,
+    /// Number of cells in the spreadsheet.
     pub num_cells: usize,
 }
 
 impl State {
+    /// Constructs a default empty state.
     pub fn new() -> Self {
         State {
             old_value: Cell::invalid(),
@@ -484,12 +547,20 @@ impl State {
         }
     }
 }
+
+/// Captures the entire spreadsheet state including formulas and dependencies.
+///
+/// Used for features like undo/redo or saving state between operations.
 #[derive(Clone)]
 pub struct StateSnapshot {
+    /// Current values in the spreadsheet.
     pub arr: Vec<Cell>,
+    /// Formulas assigned to each cell.
     pub formula_array: Vec<Formula>,
+    /// Dependency graph linking formulas and affected cells.
     pub graph: Graph,
 }
+
 impl Default for Formula {
     fn default() -> Self {
         Formula {

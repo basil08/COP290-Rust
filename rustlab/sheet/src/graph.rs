@@ -1,6 +1,10 @@
 use std::collections::VecDeque;
 use std::i32;
-
+/// Represents a formula associated with a spreadsheet cell.
+///
+/// - `op_type`: Indicates the operation type (e.g. 0: assign, 1-4: unary op, 5-8: binary op, 9-13: range functions).
+/// - `op_info1`: First operand (may be a cell index or constant).
+/// - `op_info2`: Second operand or auxiliary value.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Formula {
     pub op_type: i32,
@@ -8,27 +12,40 @@ pub struct Formula {
     pub op_info2: i32,
 }
 
+/// A node in an adjacency list used to represent dependencies between cells.
 #[derive(Debug)]
 pub struct Cell {
+    /// Index of the dependent cell.
     pub cell: usize,
+    /// Pointer to the next dependent cell.
     pub next: Option<Box<Cell>>,
 }
 
+/// Represents a rectangular cell range with a dependent output cell.
 #[derive(Debug)]
 pub struct Range {
+    /// Start cell of the range.
     pub start_cell: usize,
+    /// End cell of the range.
     pub end_cell: usize,
+    /// Cell that depends on the result of the range.
     pub dependent_cell: usize,
+    /// Pointer to the next range node.
     pub next: Option<Box<Range>>,
 }
 
+/// The core graph structure used for tracking dependencies and formula evaluation.
 pub struct Graph {
+    /// Adjacency list where each index points to a list of dependents.
     pub adj_lists: Vec<Option<Box<Cell>>>,
+    /// Linked list of rectangular ranges with dependent cells.
     pub ranges: Option<Box<Range>>,
+    /// Total number of cells in the spreadsheet.
     pub num_cells: usize,
 }
 
 impl Graph {
+    /// Creates a new `Graph` with the given number of cells.
     pub fn new(num_cells: usize) -> Self {
         Self {
             adj_lists: vec![None; num_cells],
@@ -36,10 +53,11 @@ impl Graph {
             num_cells,
         }
     }
-
+/// Returns a new boxed `Cell` node for the given index.
     pub fn add_cell(cell: usize) -> Option<Box<Cell>> {
         Some(Box::new(Cell { cell, next: None }))
     }
+/// Returns a new boxed `Range` from start to end affecting the dependent cell.
 
     pub fn add_range(start: usize, end: usize, dependent: usize) -> Option<Box<Range>> {
         Some(Box::new(Range {
@@ -49,6 +67,7 @@ impl Graph {
             next: None,
         }))
     }
+/// Adds a directed edge from one cell to another.
 
     pub fn add_edge(&mut self, from: usize, to: usize) {
         if self.has_edge(from, to) {
@@ -60,8 +79,9 @@ impl Graph {
         });
         self.adj_lists[from] = Some(new_cell);
     }
+/// Checks whether a directed edge already exists from one cell to another.
 
-    fn has_edge(&self, from: usize, to: usize) -> bool {
+   pub fn has_edge(&self, from: usize, to: usize) -> bool {
         let mut current = &self.adj_lists[from];
         while let Some(cell) = current {
             if cell.cell == to {
@@ -71,6 +91,7 @@ impl Graph {
         }
         false
     }
+/// Deletes a dependency edge from the graph.
 
     pub fn delete_edge(&mut self, from: usize, to: usize) {
         let mut head = self.adj_lists[from].take();
@@ -89,6 +110,7 @@ impl Graph {
 
         self.adj_lists[from] = dummy.next;
     }
+/// Inserts a new range-based dependency into the graph.
 
     pub fn add_range_to_graph(&mut self, start: usize, end: usize, dependent: usize) {
         let mut new_range = Self::add_range(start, end, dependent);
@@ -97,6 +119,7 @@ impl Graph {
         }
         self.ranges = new_range;
     }
+/// Removes a range from the graph if it targets the specified dependent cell.
 
     pub fn delete_range(&mut self, dependent: usize) {
         let mut prev: *mut Option<Box<Range>> = &mut self.ranges;
@@ -110,6 +133,7 @@ impl Graph {
             }
         }
     }
+/// Adds a formula to the formula array for a specific cell.
 
     pub fn add_formula(graph: &mut Graph, cell: usize, c1: usize, c2: usize, op_type: i32, formula_array: &mut [Formula]) {
         formula_array[cell] = Formula {
@@ -118,6 +142,7 @@ impl Graph {
             op_info2: c2 as i32,
         };
     }
+/// Evaluates two integers with the specified arithmetic operation.
 
     pub fn arithmetic_eval2(v1: i32, v2: i32, op: char) -> i32 {
         match op {
@@ -128,6 +153,9 @@ impl Graph {
             _ => i32::MIN,
         }
     }
+/// Performs a depth-first topological sort starting from a cell, detecting cycles.
+///
+/// Updates `stack` with a valid evaluation order if no cycles are found.
 
     pub fn topo_sort_from_cell(
         &self,
@@ -182,6 +210,9 @@ impl Graph {
         on_stack[start] = false;
         stack.push(start);
     }
+/// Evaluates and updates all dependent cells starting from `start_cell`.
+///
+/// Performs topological sort, evaluates formulas, handles errors and propagation.
 
     pub fn recalc(
         &mut self,
@@ -349,6 +380,7 @@ impl Graph {
         }
     }
 }
+/// Clones a dependency list node recursively.
 impl Clone for Cell {
     fn clone(&self) -> Self {
         Self {
@@ -357,7 +389,7 @@ impl Clone for Cell {
         }
     }
 }
-
+/// Clones a range list node recursively.
 impl Clone for Range {
     fn clone(&self) -> Self {
         Self {

@@ -1,9 +1,37 @@
+//! # Spreadsheet Built-in Functions
+//!
+//! This module provides a set of core spreadsheet functions implemented in Rust. These functions operate
+//! over a 2D spreadsheet represented as a flat 1D array of `i32` values. Each function reads a specified
+//! rectangular range of cells, performs a calculation, and writes the result to a target cell.
+//!
+//! ## Supported Functions
+//! - `min_func`: Minimum value in a range
+//! - `max_func`: Maximum value in a range
+//! - `sum_func`: Total sum of values in a range
+//! - `avg_func`: Average (mean) of values in a range
+//! - `stdev_func`: Standard deviation of values in a range
+//! - `sleep_func`: Introduces a delay based on a cell value or a literal
+//!
+//! ## Architecture
+//! - Spreadsheet is stored in a flat array (`Vec<i32>`) indexed as `row * cols + col`
+//! - Dependency tracking is handled by a custom `Graph` structure
+//! - Formulas are stored in a separate array and referenced by index
+//! - Errors are tracked using a global `INVALID_RANGE` flag and sentinel value `i32::MIN`
+//!
+//! ## Example Usage
+//! ```text
+//! Input: "A1 = SUM(B1:B3)"
+//! Parsed as: write result to cell A1, sum values from B1 to B3
+//! ```
+
+
 use crate::graph::{Graph, Formula};
 use crate::parser::cell_parser;
 use std::cmp::{max, min};
 use std::i32;
 use std::thread::sleep;
 use std::time::Duration;
+/// Global flag to indicate if a function encountered an invalid range.
 
 pub static mut INVALID_RANGE: bool = false;
 
@@ -21,12 +49,14 @@ fn error_return() -> i32 {
     unsafe { INVALID_RANGE = true; }
     -1
 }
+/// Validates that `start` to `end` defines a proper left-to-right, top-to-bottom rectangular range.
 
 fn validate_range(start: usize, end: usize, cols: usize) -> bool {
     let (sr, sc) = (start / cols, start % cols);
     let (er, ec) = (end / cols, end % cols);
     sr < er || (sr == er && sc <= ec)
 }
+/// Calculates the standard deviation (rounded) from a slice of integers.
 
 fn std(values: &[i32]) -> i32 {
     if values.len() <= 1 {
@@ -42,6 +72,7 @@ fn std(values: &[i32]) -> i32 {
         .sum::<f64>() / values.len() as f64;
     variance.sqrt().round() as i32
 }
+/// Parses a range of cells from a string (e.g., "SUM(B1:C3)") and returns the start and end indices.
 
 fn extract_range_cells(a: &str, eq_idx: usize, c: usize, r: usize, graph: &mut Graph) -> Option<(usize, usize)> {
     let open_paren = a[eq_idx..].find('(')? + eq_idx;
@@ -58,6 +89,9 @@ fn extract_range_cells(a: &str, eq_idx: usize, c: usize, r: usize, graph: &mut G
     Some((range_start, range_end))
 }
 
+/// Computes the minimum value within a specified range and stores it in the target cell.
+/// Adds the formula and dependency to the graph for recalculation tracking.
+/// Returns 1 on success.
 
 pub fn min_func(
     a: &str, 
@@ -105,6 +139,9 @@ pub fn min_func(
     arr[first_cell] = min_val;
     1
 }
+/// Computes the maximum value within a specified range and stores it in the target cell.
+/// Adds the formula and dependency to the graph for recalculation tracking.
+/// Returns 1 on success.
 
 pub fn max_func(
     a: &str, 
@@ -149,6 +186,9 @@ pub fn max_func(
     1
 }
 
+/// Computes the total sum of values within a specified range and stores it in the target cell.
+/// Adds the formula and dependency to the graph for recalculation tracking.
+/// Returns 1 on success.
 
 pub fn sum_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut [i32], graph: &mut Graph, formula_array: &mut [Formula]) -> i32 {
     let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
@@ -159,28 +199,85 @@ pub fn sum_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut 
     arr[first_cell] = sum;
     1
 }
+/// Computes the average value within a specified range and stores it in the target cell.
+/// Adds the formula and dependency to the graph for recalculation tracking.
+/// Returns 1 on success.
 
-pub fn avg_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut [i32], graph: &mut Graph, formula_array: &mut [Formula]) -> i32 {
-    let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
-    let (range_start, range_end) = extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
+pub fn avg_func(
+    a: &str,
+    c: usize,
+    r: usize,
+    eq_idx: usize,
+    _: usize,
+    arr: &mut [i32],
+    graph: &mut Graph,
+    formula_array: &mut [Formula],
+) -> i32 {
+    let first_cell =
+        cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
+    let (range_start, range_end) =
+        extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
+
     Graph::add_formula(graph, first_cell, range_start, range_end, 11, formula_array);
     graph.add_range_to_graph(range_start, range_end, first_cell);
-    let values: Vec<i32> = (range_start..=range_end).map(|idx| arr[idx]).collect();
+
+    let (start_row, start_col) = (range_start / c, range_start % c);
+    let (end_row, end_col) = (range_end / c, range_end % c);
+
+    let mut values = Vec::new();
+    for row in start_row..=end_row {
+        for col in start_col..=end_col {
+            let idx = row * c + col;
+            values.push(arr[idx]);
+        }
+    }
+
     let sum: i32 = values.iter().sum();
     let count = values.len();
     arr[first_cell] = if count > 0 { sum / count as i32 } else { 0 };
     1
 }
 
-pub fn stdev_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut [i32], graph: &mut Graph, formula_array: &mut [Formula]) -> i32 {
-    let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
-    let (range_start, range_end) = extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
+/// Computes the standard deviation of values within a specified range and stores it in the target cell.
+/// Adds the formula and dependency to the graph for recalculation tracking.
+/// Returns 1 on success.
+
+pub fn stdev_func(
+    a: &str,
+    c: usize,
+    r: usize,
+    eq_idx: usize,
+    _: usize,
+    arr: &mut [i32],
+    graph: &mut Graph,
+    formula_array: &mut [Formula],
+) -> i32 {
+    let first_cell =
+        cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
+    let (range_start, range_end) =
+        extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
+
     Graph::add_formula(graph, first_cell, range_start, range_end, 13, formula_array);
     graph.add_range_to_graph(range_start, range_end, first_cell);
-    let values: Vec<i32> = (range_start..=range_end).map(|idx| arr[idx]).collect();
+
+    let (start_row, start_col) = (range_start / c, range_start % c);
+    let (end_row, end_col) = (range_end / c, range_end % c);
+
+    let mut values = Vec::new();
+    for row in start_row..=end_row {
+        for col in start_col..=end_col {
+            let idx = row * c + col;
+            values.push(arr[idx]);
+        }
+    }
+
     arr[first_cell] = std(&values);
     1
 }
+/// Delays execution for a number of seconds specified either directly or from a referenced cell.
+/// Also stores the sleep duration in the target cell and logs the dependency.
+/// Returns 1 on success.
+
 pub fn sleep_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut [i32], graph: &mut Graph, formula_array: &mut [Formula]) -> i32 {
 
     let target_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
