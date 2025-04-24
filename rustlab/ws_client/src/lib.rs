@@ -1,5 +1,5 @@
 //! A WebSocket client implementation for real-time collaborative grid editing.
-//! 
+//!
 //! This module provides a WebSocket client that connects to a server, manages a shared grid,
 //! and handles real-time updates from other clients. It uses Leptos for the UI and implements
 //! a simple CRDT-based conflict resolution strategy.
@@ -12,7 +12,7 @@ use rand::prelude::*;
 use web_sys::WebSocket;
 
 /// Represents a change event in the grid.
-/// 
+///
 /// This struct is used to communicate UI changes to the Leptos effect system
 /// and to send updates to other connected clients.
 #[derive(Debug, Clone)]
@@ -26,7 +26,7 @@ pub struct ChangeEvent {
 }
 
 /// The main application component that manages the WebSocket connection and grid state.
-/// 
+///
 /// This component:
 /// 1. Establishes the WebSocket connection
 /// 2. Manages the list of connected clients
@@ -143,12 +143,12 @@ pub fn App() -> impl IntoView {
 }
 
 /// A component that handles the initial connection to the WebSocket server.
-/// 
+///
 /// This component:
 /// 1. Provides a form for users to enter their name
 /// 2. Establishes the initial connection to the server
 /// 3. Sends the INIT event with the user's name
-/// 
+///
 /// # Props
 /// * `ws` - A signal containing the WebSocket connection
 /// * `set_name` - A signal setter for the user's name
@@ -187,7 +187,7 @@ pub fn Connect(ws: ReadSignal<Option<WebSocket>>, set_name: WriteSignal<String>)
 }
 
 /// A component that displays the list of currently connected clients.
-/// 
+///
 /// # Props
 /// * `clients` - A signal containing the list of connected client names
 #[component]
@@ -208,12 +208,12 @@ pub fn Clients(clients: ReadSignal<Vec<String>>) -> impl IntoView {
 }
 
 /// A component that renders and manages the interactive grid.
-/// 
+///
 /// This component:
 /// 1. Renders a 10x10 grid of input cells
 /// 2. Handles user input and cell value changes
 /// 3. Manages the grid's state and updates
-/// 
+///
 /// # Props
 /// * `data` - A signal containing the grid data
 /// * `set_data_change` - A signal setter for grid change events
@@ -269,10 +269,10 @@ pub fn Grid(
 }
 
 /// Creates a new column with default values.
-/// 
+///
 /// # Arguments
 /// * `idx` - The index of the column
-/// 
+///
 /// # Returns
 /// A new `Column` instance with default values
 fn init_column(idx: usize) -> Column {
@@ -280,9 +280,9 @@ fn init_column(idx: usize) -> Column {
 }
 
 /// Initializes the grid data structure.
-/// 
+///
 /// Creates a 10x10 grid with default values for all cells.
-/// 
+///
 /// # Returns
 /// A vector of `Row` instances representing the initial grid state
 pub fn init_data() -> Vec<Row> {

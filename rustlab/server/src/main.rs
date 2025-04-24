@@ -1,6 +1,6 @@
 // server.rs
 //! A WebSocket server implementation for real-time collaborative grid editing.
-//! 
+//!
 //! This server handles WebSocket connections from multiple clients, manages client state,
 //! and broadcasts grid updates to all connected clients.
 

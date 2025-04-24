@@ -1,30 +1,30 @@
 // lib.rs
 //! A Conflict-free Replicated Data Type (CRDT) implementation for collaborative grid editing.
-//! 
+//!
 //! This library provides the core data structures and event types needed for building
 //! a collaborative grid editing system. It implements CRDTs to ensure eventual consistency
 //! across multiple clients.
-//! 
+//!
 //! # Examples
-//! 
+//!
 //! ```rust
 //! use crdt::{Client, Event, InitEvent, GridUpdateEvent};
-//! 
+//!
 //! // Create a new client
 //! let client = Client { name: "Alice".to_string() };
-//! 
+//!
 //! // Create an initialization event
 //! let init_event = InitEvent { name: "Alice".to_string() };
-//! 
+//!
 //! // Create a grid update event
 //! let grid_update = GridUpdateEvent {
 //!     grid: vec![],
 //!     sender: "Alice".to_string(),
 //! };
 //! ```
-//! 
+//!
 //! # Event Types
-//! 
+//!
 //! The library supports three main event types:
 //! - `INIT`: For client initialization
 //! - `GRID_UPDATE`: For grid content updates

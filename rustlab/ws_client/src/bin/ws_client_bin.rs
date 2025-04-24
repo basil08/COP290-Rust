@@ -1,5 +1,5 @@
 //! The binary entry point for the WebSocket client application.
-//! 
+//!
 //! This module provides the main function that bootstraps the Leptos application
 //! and mounts the root `App` component to the web page's body.
 
@@ -8,7 +8,7 @@ use leptos::*;
 use ws_client::App;
 
 /// The main entry point for the WebSocket client application.
-/// 
+///
 /// This function:
 /// 1. Initializes the Leptos runtime
 /// 2. Mounts the root `App` component to the document body
