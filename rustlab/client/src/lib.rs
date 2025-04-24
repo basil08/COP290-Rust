@@ -1,6 +1,6 @@
-use crdt::{ClientListEvent, GridUpdateEvent, Event, Column, Row, CLIENT_LIST, GRID_UPDATE};
+use crdt::{CLIENT_LIST, ClientListEvent, Column, Event, GRID_UPDATE, GridUpdateEvent, Row};
 use leptos::{ev::SubmitEvent, html::Input, *};
-use leptos_use::{use_websocket, UseWebSocketReturn};
+use leptos_use::{UseWebSocketReturn, use_websocket};
 use rand::prelude::*;
 
 // to communicate UI change to Leptos effect
@@ -40,8 +40,11 @@ pub fn App() -> impl IntoView {
 
             let data_event = serde_json::to_value(GridUpdateEvent { grid: d, sender: name.get() })
                 .expect("can serialize change event");
-            let serialized = serde_json::to_string(&Event { event_type: GRID_UPDATE.to_owned(), data: data_event })
-                .expect("can be serialized");
+            let serialized = serde_json::to_string(&Event {
+                event_type: GRID_UPDATE.to_owned(),
+                data: data_event,
+            })
+            .expect("can be serialized");
             cloned_send(&serialized);
         }
     });
@@ -176,27 +179,13 @@ pub fn Grid(
 }
 
 fn init_column(idx: usize) -> Column {
-    Column {
-        idx,
-        value: String::default(),
-        timestamp: 0,
-        peer: String::default(),
-    }
+    Column { idx, value: String::default(), timestamp: 0, peer: String::default() }
 }
 
 pub fn init_data() -> Vec<Row> {
     vec![
-        Row {
-            idx: 0,
-            columns: vec![init_column(0), init_column(1), init_column(2)],
-        },
-        Row {
-            idx: 1,
-            columns: vec![init_column(0), init_column(1), init_column(2)],
-        },
-        Row {
-            idx: 2,
-            columns: vec![init_column(0), init_column(1), init_column(2)],
-        },
+        Row { idx: 0, columns: vec![init_column(0), init_column(1), init_column(2)] },
+        Row { idx: 1, columns: vec![init_column(0), init_column(1), init_column(2)] },
+        Row { idx: 2, columns: vec![init_column(0), init_column(1), init_column(2)] },
     ]
 }

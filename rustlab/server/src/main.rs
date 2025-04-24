@@ -1,20 +1,21 @@
 // server.rs
 use log::{info, warn};
 use std::io::Error;
-use std::{
-    collections::HashMap,
-    net::SocketAddr,
-    sync::Arc,
-};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 use tokio::net::TcpStream;
 
-use futures_util::{StreamExt, SinkExt};
-use tokio::sync::{mpsc::{UnboundedSender, unbounded_channel}, RwLock};
+use futures_util::{SinkExt, StreamExt};
+use tokio::sync::{
+    RwLock,
+    mpsc::{UnboundedSender, unbounded_channel},
+};
 
 use tokio_tungstenite::tungstenite::Message;
 
-use crdt::{CLIENT_LIST, Client, ClientListEvent, Event, GRID_UPDATE, GridUpdateEvent, InitEvent, INIT};
+use crdt::{
+    CLIENT_LIST, Client, ClientListEvent, Event, GRID_UPDATE, GridUpdateEvent, INIT, InitEvent,
+};
 
 type Clients = Arc<RwLock<HashMap<String, WsClient>>>;
 
@@ -90,27 +91,27 @@ async fn handle_grid_update(evt: &GridUpdateEvent, clients: Clients) {
 async fn handle_close(clients: Clients, client_id: Arc<RwLock<Option<String>>>, addr: SocketAddr) {
     if let Some(ref name) = *client_id.read().await {
         clients.as_ref().write().await.remove(name); // remove client from list
-        
+
         // send new list to all clients
         let serialized = serde_json::to_string(&Event {
             event_type: CLIENT_LIST.to_string(),
             data: serde_json::to_value(ClientListEvent {
                 clients: clients
-                .read()
-                .await
-                .clone()
-                .into_values()
-                .map(|c| Client { name: c.name })
-                .collect(),
+                    .read()
+                    .await
+                    .clone()
+                    .into_values()
+                    .map(|c| Client { name: c.name })
+                    .collect(),
             })
             .expect("Failed to serialize client list"),
         })
         .expect("Failed to serialize client list message");
-        
+
         clients.read().await.iter().for_each(|client| {
             let _ = client.1.sender.send(serialized.clone());
         });
-        
+
         info!("Client {:?} disconnected at {}", name, addr);
     }
 }
