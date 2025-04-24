@@ -1,4 +1,9 @@
 // server.rs
+//! A WebSocket server implementation for real-time collaborative grid editing.
+//!
+//! This server handles WebSocket connections from multiple clients, manages client state,
+//! and broadcasts grid updates to all connected clients.
+
 use log::{info, warn};
 use std::io::Error;
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
@@ -17,14 +22,26 @@ use crdt::{
     CLIENT_LIST, Client, ClientListEvent, Event, GRID_UPDATE, GridUpdateEvent, INIT, InitEvent,
 };
 
+/// A type alias for the thread-safe collection of connected clients.
+/// Uses `Arc<RwLock<HashMap>>` to allow safe concurrent access from multiple tasks.
 type Clients = Arc<RwLock<HashMap<String, WsClient>>>;
 
+/// Represents a connected WebSocket client.
 #[derive(Debug, Clone)]
 pub struct WsClient {
+    /// The name of the client as provided during initialization.
     pub name: String,
-    pub sender: UnboundedSender<String>, // to facilitate sending messages to the client
+    /// A channel sender used to send messages to this client.
+    pub sender: UnboundedSender<String>,
 }
 
+/// Handles the initialization of a new client connection.
+///
+/// # Arguments
+/// * `evt` - The initialization event containing the client's name
+/// * `clients` - The shared collection of connected clients
+/// * `sender` - The channel sender for this client
+/// * `client_id` - The shared reference to this client's ID
 async fn handle_init(
     evt: &InitEvent,
     clients: Clients,
@@ -64,6 +81,11 @@ async fn handle_init(
     info!("Client {} connected", name);
 }
 
+/// Handles grid update events from clients and broadcasts them to other connected clients.
+///
+/// # Arguments
+/// * `evt` - The grid update event containing the new grid state
+/// * `clients` - The shared collection of connected clients
 async fn handle_grid_update(evt: &GridUpdateEvent, clients: Clients) {
     let grid = evt.grid.clone();
     let client_message = Event {
@@ -88,6 +110,12 @@ async fn handle_grid_update(evt: &GridUpdateEvent, clients: Clients) {
     info!("Grid update sent to all clients except {}", evt.sender);
 }
 
+/// Handles client disconnection and cleanup.
+///
+/// # Arguments
+/// * `clients` - The shared collection of connected clients
+/// * `client_id` - The shared reference to the disconnecting client's ID
+/// * `addr` - The socket address of the disconnecting client
 async fn handle_close(clients: Clients, client_id: Arc<RwLock<Option<String>>>, addr: SocketAddr) {
     if let Some(ref name) = *client_id.read().await {
         clients.as_ref().write().await.remove(name); // remove client from list
@@ -116,6 +144,14 @@ async fn handle_close(clients: Clients, client_id: Arc<RwLock<Option<String>>>, 
     }
 }
 
+/// Accepts and handles a new WebSocket connection.
+///
+/// This function sets up the WebSocket connection, handles message routing,
+/// and manages the client's lifecycle.
+///
+/// # Arguments
+/// * `stream` - The TCP stream for the new connection
+/// * `clients` - The shared collection of connected clients
 async fn accept_connection(stream: TcpStream, clients: Clients) {
     // create a new websocket connection
     let addr = stream.peer_addr().expect("Stream should have a peer address");
@@ -176,6 +212,16 @@ async fn accept_connection(stream: TcpStream, clients: Clients) {
     }
 }
 
+/// The main entry point for the WebSocket server.
+///
+/// This function:
+/// 1. Initializes logging
+/// 2. Creates the shared client collection
+/// 3. Binds to the server port
+/// 4. Accepts and handles incoming connections
+///
+/// # Returns
+/// A `Result` indicating success or failure of the server operation.
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // initialize an empty hashmap to store clients

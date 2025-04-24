@@ -1,3 +1,9 @@
+//! A WebSocket client implementation for real-time collaborative grid editing.
+//!
+//! This module provides a WebSocket client that connects to a server, manages a shared grid,
+//! and handles real-time updates from other clients. It uses Leptos for the UI and implements
+//! a simple CRDT-based conflict resolution strategy.
+
 use crate::wasm_bindgen::closure::Closure;
 use crdt::{CLIENT_LIST, ClientListEvent, Column, Event, GRID_UPDATE, GridUpdateEvent, Row};
 use leptos::wasm_bindgen::JsCast;
@@ -5,15 +11,27 @@ use leptos::{ev::SubmitEvent, html::Input, *};
 use rand::prelude::*;
 use web_sys::WebSocket;
 
-// to communicate UI change to Leptos effect
-// updates local state and sends event to other clients
+/// Represents a change event in the grid.
+///
+/// This struct is used to communicate UI changes to the Leptos effect system
+/// and to send updates to other connected clients.
 #[derive(Debug, Clone)]
 pub struct ChangeEvent {
+    /// The row index where the change occurred
     pub row: usize,
+    /// The column index where the change occurred
     pub column: usize,
+    /// The new value entered in the cell
     pub value: String,
 }
 
+/// The main application component that manages the WebSocket connection and grid state.
+///
+/// This component:
+/// 1. Establishes the WebSocket connection
+/// 2. Manages the list of connected clients
+/// 3. Handles grid updates and synchronization
+/// 4. Renders the UI components
 #[component]
 pub fn App() -> impl IntoView {
     let (ws, set_ws) = create_signal::<Option<WebSocket>>(None);
@@ -124,6 +142,16 @@ pub fn App() -> impl IntoView {
     }
 }
 
+/// A component that handles the initial connection to the WebSocket server.
+///
+/// This component:
+/// 1. Provides a form for users to enter their name
+/// 2. Establishes the initial connection to the server
+/// 3. Sends the INIT event with the user's name
+///
+/// # Props
+/// * `ws` - A signal containing the WebSocket connection
+/// * `set_name` - A signal setter for the user's name
 #[component]
 pub fn Connect(ws: ReadSignal<Option<WebSocket>>, set_name: WriteSignal<String>) -> impl IntoView {
     let (connected, set_connected) = create_signal(false);
@@ -158,6 +186,10 @@ pub fn Connect(ws: ReadSignal<Option<WebSocket>>, set_name: WriteSignal<String>)
     }
 }
 
+/// A component that displays the list of currently connected clients.
+///
+/// # Props
+/// * `clients` - A signal containing the list of connected client names
 #[component]
 pub fn Clients(clients: ReadSignal<Vec<String>>) -> impl IntoView {
     view! {
@@ -175,6 +207,16 @@ pub fn Clients(clients: ReadSignal<Vec<String>>) -> impl IntoView {
     }
 }
 
+/// A component that renders and manages the interactive grid.
+///
+/// This component:
+/// 1. Renders a 10x10 grid of input cells
+/// 2. Handles user input and cell value changes
+/// 3. Manages the grid's state and updates
+///
+/// # Props
+/// * `data` - A signal containing the grid data
+/// * `set_data_change` - A signal setter for grid change events
 #[component]
 pub fn Grid(
     data: ReadSignal<Vec<Row>>,
@@ -226,10 +268,23 @@ pub fn Grid(
     }
 }
 
+/// Creates a new column with default values.
+///
+/// # Arguments
+/// * `idx` - The index of the column
+///
+/// # Returns
+/// A new `Column` instance with default values
 fn init_column(idx: usize) -> Column {
     Column { idx, value: String::default(), timestamp: 0, peer: String::default() }
 }
 
+/// Initializes the grid data structure.
+///
+/// Creates a 10x10 grid with default values for all cells.
+///
+/// # Returns
+/// A vector of `Row` instances representing the initial grid state
 pub fn init_data() -> Vec<Row> {
     (0..10).map(|i| Row { idx: i, columns: (0..10).map(init_column).collect() }).collect()
 }
