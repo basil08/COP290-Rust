@@ -4,21 +4,27 @@ mod table_component;
 mod cell_component;
 mod models;
 mod request_form;
+mod context;
 
 use table_component::TableComponent;
 use request_form::RequestForm;
+use context::*;
 
 #[function_component(App)]
 fn app() -> Html {
-    // You might want to define your API URL here or get it from a configuration
+    
+    let app_state = use_reducer(AppState::default);
+
     let api_url = "http://localhost:3001/api/query".to_string();
     
     html! {
-        <div style="font-family: sans-serif; padding: 2rem;">
-            <h1 style="font-size: 2rem; margin-bottom: 1rem;">{ "🦀 Rust Spreadsheet" }</h1>
-            <TableComponent />
-            <RequestForm api_url={api_url} />
-        </div>
+        <ContextProvider<AppContext> context={app_state.clone()}>
+            <div style="font-family: sans-serif; padding: 2rem;">
+                <h1 style="font-size: 2rem; margin-bottom: 1rem;">{ "🦀 Rust Spreadsheet" }</h1>
+                <TableComponent />
+                <RequestForm api_url={api_url} />
+            </div>
+        </ContextProvider<AppContext>>
     }
 }
 

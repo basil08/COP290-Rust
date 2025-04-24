@@ -7,17 +7,25 @@ use gloo::console::log;
 use sheet::function_ext::{Cell, CellValue};
 use crate::models::*;
 use crate::cell_component::CellComponent;
+use crate::context::AppContext;
 
 #[function_component(TableComponent)]
 pub fn table_component() -> Html {
     let sheet_state = use_state(|| None::<Sheet>);
     let error_state = use_state(|| None::<String>);
 
+    let app_context: UseReducerHandle<crate::context::AppState> = use_context::<AppContext>().expect("no ctx found");
+
     {
         let sheet_state = sheet_state.clone();
         let error_state = error_state.clone();
-        use_effect_with((), move |_| {
-            log!("Fetching sheet data...");
+        let refresh_counter = app_context.refresh_counter;
+        
+        use_effect_with(refresh_counter, move |_| {
+            let sheet_state = sheet_state.clone();
+            let error_state = error_state.clone();
+            
+            log!("Fetching sheet data... (refresh {})", refresh_counter);
             spawn_local(async move {
                 match Request::get("http://127.0.0.1:3001/sheet").send().await {
                     Ok(response) => {

@@ -4,6 +4,9 @@ use gloo_net::http::Request;
 use web_sys::HtmlInputElement;
 use serde_json;
 
+use crate::context::{AppContext, AppAction};
+
+
 #[derive(Properties, PartialEq)]
 pub struct RequestFormProps {
     pub api_url: String,
@@ -13,11 +16,16 @@ pub struct RequestFormProps {
 pub fn request_form(props: &RequestFormProps) -> Html {
     let input_ref = use_node_ref();
     let response = use_state(|| String::new());
+    let is_loading = use_state(|| false);
     
+    // Get the app context for triggering refreshes
+    let app_context = use_context::<AppContext>().expect("no ctx found");
+
     let onsubmit = {
         let input_ref = input_ref.clone();
         let response = response.clone();
         let api_url = props.api_url.clone();
+        let app_context = app_context.clone(); // Clone context for the closure
         
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
@@ -27,10 +35,10 @@ pub fn request_form(props: &RequestFormProps) -> Html {
                 if !query.trim().is_empty() {
                     let api_url = api_url.clone();
                     let response = response.clone();
+                    let app_context = app_context.clone(); // Clone for the async closure
                     
                     spawn_local(async move {
-                        // Instead of sending raw text, we'll send as plain text
-                        // but handle the response as JSON similar to cell_component
+                        // Create the request with text/plain content type
                         let request = Request::post(&api_url)
                             .header("Content-Type", "text/plain");
                         
@@ -51,7 +59,12 @@ pub fn request_form(props: &RequestFormProps) -> Html {
                                     Ok(json) => {
                                         // Format JSON nicely
                                         match serde_json::to_string_pretty(&json) {
-                                            Ok(formatted) => response.set(formatted),
+                                            Ok(formatted) => {
+                                                response.set(formatted);
+                                                
+                                                // Trigger a refresh after successful operation
+                                                app_context.dispatch(AppAction::Refresh);
+                                            },
                                             Err(e) => response.set(format!("Error formatting JSON: {:?}", e)),
                                         }
                                     },
@@ -68,17 +81,10 @@ pub fn request_form(props: &RequestFormProps) -> Html {
         })
     };
 
+
     html! {
         <div style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
             <h3>{"Command Center"}</h3>
-            // <p style="margin-bottom: 10px; color: #666;">
-            //     {"Try commands like: "} 
-            //     {"sum 0,0 2,2</code>{','}"}
-            //     {"<code>avg 0,0 2,2</code>{', '}"}
-            //     {"<code>clear 0,0 2,2</code>{', '}"}
-            //     {"<code>count 0,0 2,2</code>{', or '}"}
-            //     {"<code>help</code>"}
-            // </p>
             <form {onsubmit} style="display: flex; gap: 10px;">
                 <input 
                     ref={input_ref}
