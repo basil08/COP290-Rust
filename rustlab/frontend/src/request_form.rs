@@ -1,0 +1,115 @@
+use yew::prelude::*;
+use wasm_bindgen_futures::spawn_local;
+use gloo_net::http::Request;
+use web_sys::HtmlInputElement;
+use serde_json;
+
+#[derive(Properties, PartialEq)]
+pub struct RequestFormProps {
+    pub api_url: String,
+}
+
+#[function_component(RequestForm)]
+pub fn request_form(props: &RequestFormProps) -> Html {
+    let input_ref = use_node_ref();
+    let response = use_state(|| String::new());
+    
+    let onsubmit = {
+        let input_ref = input_ref.clone();
+        let response = response.clone();
+        let api_url = props.api_url.clone();
+        
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
+            
+            if let Some(input) = input_ref.cast::<HtmlInputElement>() {
+                let query = input.value();
+                if !query.trim().is_empty() {
+                    let api_url = api_url.clone();
+                    let response = response.clone();
+                    
+                    spawn_local(async move {
+                        // Instead of sending raw text, we'll send as plain text
+                        // but handle the response as JSON similar to cell_component
+                        let request = Request::post(&api_url)
+                            .header("Content-Type", "text/plain");
+                        
+                        // Handle the body() Result
+                        let request_with_body = match request.body(query) {
+                            Ok(req) => req,
+                            Err(e) => {
+                                response.set(format!("Failed to set request body: {:?}", e));
+                                return;
+                            }
+                        };
+                        
+                        // Send the request
+                        match request_with_body.send().await {
+                            Ok(resp) => {
+                                // Parse the response as JSON
+                                match resp.json::<serde_json::Value>().await {
+                                    Ok(json) => {
+                                        // Format JSON nicely
+                                        match serde_json::to_string_pretty(&json) {
+                                            Ok(formatted) => response.set(formatted),
+                                            Err(e) => response.set(format!("Error formatting JSON: {:?}", e)),
+                                        }
+                                    },
+                                    Err(e) => response.set(format!("Error parsing response: {:?}", e)),
+                                }
+                            },
+                            Err(e) => response.set(format!("Request error: {:?}", e)),
+                        }
+                    });
+                    
+                    input.set_value("");
+                }
+            }
+        })
+    };
+
+    html! {
+        <div style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
+            <h3>{"Command Center"}</h3>
+            // <p style="margin-bottom: 10px; color: #666;">
+            //     {"Try commands like: "} 
+            //     {"sum 0,0 2,2</code>{','}"}
+            //     {"<code>avg 0,0 2,2</code>{', '}"}
+            //     {"<code>clear 0,0 2,2</code>{', '}"}
+            //     {"<code>count 0,0 2,2</code>{', or '}"}
+            //     {"<code>help</code>"}
+            // </p>
+            <form {onsubmit} style="display: flex; gap: 10px;">
+                <input 
+                    ref={input_ref}
+                    type="text" 
+                    placeholder="Enter your command here..."
+                    style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+                />
+                <button 
+                    type="submit"
+                    style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                >
+                    {"Execute"}
+                </button>
+            </form>
+            
+            <div style="margin-top: 10px;">
+                {
+                    if !(*response).is_empty() {
+                        html! {
+                            <div style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: white;">
+                                <h4>{"Response:"}</h4>
+                                <pre style="white-space: pre-wrap; overflow-wrap: break-word; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">
+                                    {&*response}
+                                </pre>
+                            </div>
+                        }
+                    } else {
+                        html! {}
+                    }
+                }
+            </div>
+        </div>
+    }
+}

@@ -24,6 +24,7 @@ pub fn cell_component(props: &CellProps) -> Html {
         let original_value = original_value.clone();
         Callback::from(move |_| {
             original_value.set((*value).clone());
+            value.set(String::new());
             is_editing.set(true);
         })
     };
@@ -112,7 +113,11 @@ pub fn cell_component(props: &CellProps) -> Html {
 
     html! {
         <td
-            style="border: 1px solid #ccc; padding: 8px;"
+            style={if *is_editing {
+                "width: 135px; border: 1px solid #ccc; padding: 2px; background-color: #f0f8ff;"
+            } else {
+                "width: 135px; border: 1px solid #ccc; padding: 2px;"
+            }}
             ondblclick={on_double_click}
         >
             {
@@ -125,6 +130,7 @@ pub fn cell_component(props: &CellProps) -> Html {
                             onblur={on_blur}
                             onkeypress={on_key_press}
                             autofocus=true
+                            style="width: 100%; box-sizing: border-box; border: none; outline: none; font-family: inherit; font-size: inherit; background-color: transparent;"
                         />
                     }
                 } else {

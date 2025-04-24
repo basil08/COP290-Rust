@@ -1,101 +1,79 @@
+mod server_models;
+mod handlers;
+mod operations;
+mod types;
+
 use axum::{
     routing::{get, post},
-    extract::Json as ExtractJson,
-    Json, Router,
+    Router,
 };
-use serde::{Deserialize, Serialize};
+use sheet::graph_ext::StateSnapshot;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
+use sheet::display_ext::{printer, scroller};
+use sheet::function_ext::Cell;
+use sheet::graph_ext::{Graph, Formula, State};
+use sheet::parser_ext::parser;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct Cell {
-    value: String,
-}
+use server_models::Sheet;
+use handlers::{get_sheet, update_cell, process_query, undo_action, redo_action};
+use types::{AppState, ExtendedState};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct Sheet {
-    data: Vec<Vec<Cell>>,
-}
-
-// Define request payload for updating a cell
-#[derive(Serialize, Deserialize, Debug)]
-struct UpdateCellRequest {
-    row_id: String,
-    column_id: String,
-    value: String,
-}
-
-// Define response for update operations
-#[derive(Serialize, Deserialize, Debug)]
-struct UpdateResponse {
-    success: bool,
-    message: String,
-}
-
-// Create a shared state for the sheet data
-type AppState = Arc<RwLock<Sheet>>;
-
-async fn get_sheet(state: axum::extract::State<AppState>) -> Json<Sheet> {
-    let sheet = state.read().await.clone();
-    Json(sheet)
-}
-
-async fn update_cell(
-    axum::extract::State(state): axum::extract::State<AppState>,
-    ExtractJson(payload): ExtractJson<UpdateCellRequest>,
-) -> Json<UpdateResponse> {
-    // Parse row and column IDs from string to usize
-    let row_index = match payload.row_id.parse::<usize>() {
-        Ok(index) => index,
-        Err(_) => {
-            return Json(UpdateResponse {
-                success: false,
-                message: "Invalid row ID format".to_string(),
-            })
-        }
-    };
-
-    let col_index = match payload.column_id.parse::<usize>() {
-        Ok(index) => index,
-        Err(_) => {
-            return Json(UpdateResponse {
-                success: false,
-                message: "Invalid column ID format".to_string(),
-            })
-        }
-    };
-
-    // Update the cell value in our sheet data
-    let mut sheet = state.write().await;
-    
-    // Check if the indices are valid
-    if row_index >= sheet.data.len() || col_index >= sheet.data[0].len() {
-        return Json(UpdateResponse {
-            success: false,
-            message: "Cell indices out of bounds".to_string(),
-        });
+// Helper function to create a snapshot (similar to the CLI version)
+fn create_snapshot(
+    arr: &Vec<Cell>,
+    formula_array: &Vec<Formula>,
+    graph: &Graph,
+) -> StateSnapshot {
+    StateSnapshot {
+        arr: arr.clone(),
+        formula_array: formula_array.clone(),
+        graph: graph.clone(),
     }
-
-    // Update the cell value
-    sheet.data[row_index][col_index].value = payload.value;
-
-    // Return success response
-    Json(UpdateResponse {
-        success: true,
-        message: "Cell updated successfully".to_string(),
-    })
 }
 
 #[tokio::main]
 async fn main() {
     // Initialize the sheet with default values
-    let initial_sheet = Sheet {
-        data: vec![vec![Cell { value: "0".into() }; 10]; 10],
-    };
+    let r = 10;
+    let c = 10;
+    let num_cells = r * c;
     
-    // Create the shared state
-    let app_state = Arc::new(RwLock::new(initial_sheet));
+    // Initialize extended state components
+    let cells = vec![Cell::new_int(0); num_cells];
+    let formula_array = vec![Formula::default(); num_cells];
+    let graph = Graph::new(num_cells);
+    let state = State::new();
+    
+    // Initialize regular sheet model for API compatibility
+    let sheet = Sheet::new(10, 10);
+    let num_cells = r * c;
+    let cols_i32 = c as i32;
+    let rows_i32 = r as i32;
+
+    let mut arr = vec![Cell::new_int(0); num_cells];
+    let mut formula_array = vec![Formula::default(); num_cells];
+    let mut graph = Graph::new(num_cells);
+    let mut state = State::new();
+    let mut undo_stack: Vec<StateSnapshot> = Vec::new();
+    let mut redo_stack: Vec<StateSnapshot> = Vec::new();
+
+
+    
+    // Create the extended state with all components
+    let extended_state = ExtendedState {
+        sheet: sheet.clone(),
+        cells: cells.clone(),
+        formula_array: formula_array.clone(),
+        graph: graph.clone(),
+        state: state.clone(),
+        undo_stack,
+        redo_stack,
+        current_x: 0,
+        current_y: 0,
+    };
+    let app_state = Arc::new(RwLock::new(extended_state));
 
     // Create a CORS layer that allows any origin
     let cors = CorsLayer::new()
@@ -107,12 +85,18 @@ async fn main() {
     let app = Router::new()
         .route("/sheet", get(get_sheet))
         .route("/update-cell", post(update_cell))
+        .route("/api/query", post(process_query))
+        .route("/api/undo", post(undo_action))    // New endpoint for undo
+        .route("/api/redo", post(redo_action))    // New endpoint for redo
         .with_state(app_state)
         .layer(cors);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
     println!("✅ Server running at http://{}", addr);
     println!("🔄 Cell update endpoint available at http://{}/update-cell", addr);
+    println!("📝 Query endpoint available at http://{}/api/query", addr);
+    println!("↩️ Undo endpoint available at http://{}/api/undo", addr);
+    println!("↪️ Redo endpoint available at http://{}/api/redo", addr);
 
     axum::serve(
         tokio::net::TcpListener::bind(addr).await.unwrap(),

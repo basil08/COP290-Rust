@@ -4,8 +4,8 @@ use wasm_bindgen_futures::spawn_local;
 use gloo::console::log;
 
 // mod cell_component;
-
-use crate::models::{Cell, Sheet};
+use sheet::function_ext::{Cell, CellValue};
+use crate::models::*;
 use crate::cell_component::CellComponent;
 
 #[function_component(TableComponent)]
@@ -70,11 +70,17 @@ pub fn table_component() -> Html {
                                     html! {
                                         <tr>
                                             <td style="border: 1px solid #ccc; padding: 8px; background:rgb(7, 188, 152);">{ r + 1 }</td>
-                                            {
+                                            {   
                                                 row.iter().enumerate().map(|(c, cell)| {
+                                                    let display_value = match &cell.value {
+                                                        CellValue::Int(i) => i.to_string(),
+                                                        CellValue::Float(f) => f.to_string(),
+                                                        CellValue::String(s) => s.clone(),
+                                                    };
+
                                                     html! {
                                                         <CellComponent
-                                                                value={cell.value.clone()}
+                                                                value={display_value}
                                                                 row_id={r.to_string()}
                                                                 column_id={c.to_string()}
                                                                 api_url={"http://127.0.0.1:3001/update-cell".to_string()}
