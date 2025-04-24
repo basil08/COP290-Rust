@@ -53,13 +53,90 @@ fn test_parser_arithmetic_const_cell_expr() {
 }
 
 #[test]
-fn test_parser_arithmetic_cell_cell_expr() {
+fn test_parser_arithmetic_cell_cell_expr_multiplication() {
     let (mut graph, mut arr, mut formulas) = setup(5);
     arr[1] = 5; // B1
     arr[2] = 2; // C1
     let status = sheet::parser::parser("A1=B1*C1", 5, 1, &mut arr, &mut graph, &mut formulas);
     assert_eq!(status, 1);
     assert_eq!(arr[0], 10);
+}
+
+#[test]
+fn test_parser_arithmetic_cell_cell_expr_addition() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    arr[1] = 5; // B1
+    arr[2] = 2; // C1
+    let status = sheet::parser::parser("A1=B1+C1", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], 7);
+}
+
+#[test]
+fn test_parser_arithmetic_cell_cell_expr_subtraction() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    arr[1] = 5; // B1
+    arr[2] = 2; // C1
+    let status = sheet::parser::parser("A1=B1-C1", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], 3);
+}
+
+#[test]
+fn test_parser_arithmetic_cell_cell_expr_division() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    arr[1] = 10; // B1
+    arr[2] = 2; // C1
+    let status = sheet::parser::parser("A1=B1/C1", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], 5);
+}
+
+#[test]
+fn test_parser_arithmetic_cell_negative_constant() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    let status = sheet::parser::parser("A1=-10", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], -10);
+}
+
+#[test]
+fn test_parser_arithmetic_const_addition() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    let status = sheet::parser::parser("A1=10+5", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], 15);
+}
+
+#[test]
+fn test_parser_arithmetic_const_subtraction() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    let status = sheet::parser::parser("A1=10-5", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], 5);
+}
+
+#[test]
+fn test_parser_arithmetic_const_multiplication() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    let status = sheet::parser::parser("A1=10*5", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], 50);
+}
+
+#[test]
+fn test_parser_arithmetic_const_division() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    let status = sheet::parser::parser("A1=10/5", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], 2);
+}
+
+#[test]
+fn test_parser_arithmetic_cell_unknown_operator() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    let status = sheet::parser::parser("A1=10@5", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, -1);
 }
 
 #[test]
@@ -263,6 +340,53 @@ fn test_parser_sum_empty_range() {
     let status = sheet::parser::parser("A1=SUM(B1:B1)", 5, 1, &mut arr, &mut graph, &mut formulas); // Lines 289-296, 300-301
     assert_eq!(status, 1);
     assert_eq!(arr[0], 0);
+}
+
+#[test]
+fn test_parser_valid_sum_range() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    arr[1] = 10;
+    arr[2] = 20;
+    let status = sheet::parser::parser("A1=SUM(B1:C1)", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+    assert_eq!(arr[0], 30);
+}
+
+#[test]
+fn test_parser_valid_stdev_range() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    arr[1] = 10;
+    arr[2] = 20;
+    let status =
+        sheet::parser::parser("A1=STDEV(B1:C1)", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+}
+
+#[test]
+fn test_parser_valid_average_range() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    arr[1] = 10;
+    arr[2] = 20;
+    let status = sheet::parser::parser("A1=AVG(B1:C1)", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+}
+
+#[test]
+fn test_parser_valid_min_range() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    arr[1] = 10;
+    arr[2] = 20;
+    let status = sheet::parser::parser("A1=MIN(B1:C1)", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
+}
+
+#[test]
+fn test_parser_valid_max_range() {
+    let (mut graph, mut arr, mut formulas) = setup(5);
+    arr[1] = 10;
+    arr[2] = 20;
+    let status = sheet::parser::parser("A1=MAX(B1:C1)", 5, 1, &mut arr, &mut graph, &mut formulas);
+    assert_eq!(status, 1);
 }
 
 // #[test]

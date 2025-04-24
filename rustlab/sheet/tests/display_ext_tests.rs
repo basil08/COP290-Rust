@@ -151,6 +151,69 @@ fn test_scroll_left_edge_cases() {
     assert!(scroller("s", &arr, &mut currx, &mut curry, c as i32, r as i32, &graph).is_ok());
     assert_eq!(currx, 5); // 15 - 10
 }
+
+#[test]
+fn test_scroll_top_edge_cases() {
+    let mut currx = 0;
+    let mut curry = 5;
+    let c = 20;
+    let r = 20;
+    let arr = vec![Cell::default(); c * r];
+    let graph = Graph::new(c * r);
+
+    // Already at topmost, flag should be triggered (no movement)
+    assert!(scroller("w", &arr, &mut currx, &mut curry, c as i32, r as i32, &graph).is_ok());
+    assert_eq!(curry, 0);
+}
+
+#[test]
+fn test_scroll_negative_curry() {
+    let mut currx = 0;
+    let mut curry = -1;
+    let c = 20;
+    let r = 20;
+    let arr = vec![Cell::default(); c * r];
+    let graph = Graph::new(c * r);
+    assert!(scroller("w", &arr, &mut currx, &mut curry, c as i32, r as i32, &graph).is_ok());
+    assert_eq!(curry, -1); // unchanged
+}
+
+#[test]
+fn test_scroll_normal_upscroll() {
+    let mut currx = 0;
+    let mut curry = 15;
+    let c = 20;
+    let r = 20;
+    let arr = vec![Cell::default(); c * r];
+    let graph = Graph::new(c * r);
+    assert!(scroller("w", &arr, &mut currx, &mut curry, c as i32, r as i32, &graph).is_ok());
+    assert_eq!(curry, 5);
+}
+
+#[test]
+fn test_scroll_right_scroll_flag_set() {
+    let mut currx = 15;
+    let mut curry = 0;
+    let c = 20;
+    let r = 20;
+    let arr = vec![Cell::default(); c * r];
+    let graph = Graph::new(c * r);
+    assert!(scroller("s", &arr, &mut currx, &mut curry, c as i32, r as i32, &graph).is_ok());
+    assert_eq!(currx, 15); // remains unchanged
+}
+
+#[test]
+fn test_scroll_negative_currx() {
+    let mut currx = -1;
+    let mut curry = 0;
+    let c = 20;
+    let r = 20;
+    let arr = vec![Cell::default(); c * r];
+    let graph = Graph::new(c * r);
+    assert!(scroller("a", &arr, &mut currx, &mut curry, c as i32, r as i32, &graph).is_ok());
+    assert_eq!(currx, -1); // wrapped around to 0
+}
+
 // #[test]
 // fn test_scroll_right_with_column_limit() {
 //     let mut currx = 0;
