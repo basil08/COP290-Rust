@@ -1,6 +1,6 @@
-use sheet::graph_ext::{Graph, Formula, State};
-use sheet::function_ext::{Cell, CellValue};
 use sheet::display_ext::{printer, scroller};
+use sheet::function_ext::{Cell, CellValue};
+use sheet::graph_ext::{Formula, Graph, State};
 
 #[test]
 fn test_add_and_delete_edge() {
@@ -163,4 +163,3 @@ fn test_scroll_left_edge_cases() {
 //     assert!(scroller("scroll_right", &arr, &mut currx, &mut curry, c, r, &graph).is_ok());
 //     assert_eq!(currx, 18); // Should cap at 18
 // }
-

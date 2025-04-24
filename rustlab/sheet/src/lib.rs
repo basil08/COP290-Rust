@@ -1,12 +1,12 @@
 pub mod display;
-pub mod function;
-pub mod graph;
-pub mod parser;
-pub mod util_ext;
 pub mod display_ext;
+pub mod function;
 pub mod function_ext;
+pub mod graph;
 pub mod graph_ext;
+pub mod parser;
 pub mod parser_ext;
+pub mod util_ext;
 // # Spreadsheet System
 //
 // A modular and extensible spreadsheet engine implemented in Rust, designed for efficient formula evaluation,
@@ -44,5 +44,5 @@ pub mod parser_ext;
 // ```
 //
 // ## Author
-// Built by Vani Gupta, 2025  
+// Built by Vani Gupta, 2025
 // Modular design encourages future contributions and easy feature expansion.

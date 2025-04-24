@@ -32,4 +32,4 @@ fn test_invalid_cell() {
 fn test_default_cell() {
     let default: Cell = Default::default();
     assert_eq!(default, Cell::invalid());
-} 
+}

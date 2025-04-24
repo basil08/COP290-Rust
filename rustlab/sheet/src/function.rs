@@ -24,8 +24,7 @@
 //! Parsed as: write result to cell A1, sum values from B1 to B3
 //! ```
 
-
-use crate::graph::{Graph, Formula};
+use crate::graph::{Formula, Graph};
 use crate::parser::cell_parser;
 use std::cmp::{max, min};
 use std::i32;
@@ -36,17 +35,23 @@ use std::time::Duration;
 pub static mut INVALID_RANGE: bool = false;
 
 fn error_usize() -> usize {
-    unsafe { INVALID_RANGE = true; }
+    unsafe {
+        INVALID_RANGE = true;
+    }
     0
 }
 
 fn error_range() -> (usize, usize) {
-    unsafe { INVALID_RANGE = true; }
+    unsafe {
+        INVALID_RANGE = true;
+    }
     (0, 0)
 }
 
 fn error_return() -> i32 {
-    unsafe { INVALID_RANGE = true; }
+    unsafe {
+        INVALID_RANGE = true;
+    }
     -1
 }
 /// Validates that `start` to `end` defines a proper left-to-right, top-to-bottom rectangular range.
@@ -69,12 +74,19 @@ fn std(values: &[i32]) -> i32 {
             let diff = x as f64 - mean;
             diff * diff
         })
-        .sum::<f64>() / values.len() as f64;
+        .sum::<f64>()
+        / values.len() as f64;
     variance.sqrt().round() as i32
 }
 /// Parses a range of cells from a string (e.g., "SUM(B1:C3)") and returns the start and end indices.
 
-fn extract_range_cells(a: &str, eq_idx: usize, c: usize, r: usize, graph: &mut Graph) -> Option<(usize, usize)> {
+fn extract_range_cells(
+    a: &str,
+    eq_idx: usize,
+    c: usize,
+    r: usize,
+    graph: &mut Graph,
+) -> Option<(usize, usize)> {
     let open_paren = a[eq_idx..].find('(')? + eq_idx;
     let close_paren = a[eq_idx..].find(')')? + eq_idx;
     if close_paren <= open_paren + 1 {
@@ -94,20 +106,21 @@ fn extract_range_cells(a: &str, eq_idx: usize, c: usize, r: usize, graph: &mut G
 /// Returns 1 on success.
 
 pub fn min_func(
-    a: &str, 
-    c: usize, 
-    r: usize, 
-    eq_idx: usize, 
-    _: usize, 
-    arr: &mut [i32], 
-    graph: &mut Graph, 
-    formula_array: &mut [Formula]
+    a: &str,
+    c: usize,
+    r: usize,
+    eq_idx: usize,
+    _: usize,
+    arr: &mut [i32],
+    graph: &mut Graph,
+    formula_array: &mut [Formula],
 ) -> i32 {
     // Get the first cell (target) for the formula
     let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
 
     // Extract the range (start and end for both rows and columns)
-    let (range_start, range_end) = extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
+    let (range_start, range_end) =
+        extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
 
     // Add formula to the graph
     Graph::add_formula(graph, first_cell, range_start, range_end, 9, formula_array);
@@ -123,14 +136,14 @@ pub fn min_func(
     if start_col == end_col {
         // 1D range (same column), loop through rows
         for row in start_row..=end_row {
-            let idx = row * c + start_col;  // Iterate through rows, same column
+            let idx = row * c + start_col; // Iterate through rows, same column
             min_val = min(min_val, arr[idx]);
         }
     } else {
         // 2D range (across multiple columns), loop through both rows and columns
         for row in start_row..=end_row {
             for col in start_col..=end_col {
-                let idx = row * c + col;  // Convert (row, col) to 1D index
+                let idx = row * c + col; // Convert (row, col) to 1D index
                 min_val = min(min_val, arr[idx]);
             }
         }
@@ -144,20 +157,21 @@ pub fn min_func(
 /// Returns 1 on success.
 
 pub fn max_func(
-    a: &str, 
-    c: usize, 
-    r: usize, 
-    eq_idx: usize, 
-    _: usize, 
-    arr: &mut [i32], 
-    graph: &mut Graph, 
-    formula_array: &mut [Formula]
+    a: &str,
+    c: usize,
+    r: usize,
+    eq_idx: usize,
+    _: usize,
+    arr: &mut [i32],
+    graph: &mut Graph,
+    formula_array: &mut [Formula],
 ) -> i32 {
     // Get the first cell (target) for the formula
     let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
 
     // Extract the 2D range (start and end for both rows and columns)
-    let (range_start, range_end) = extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
+    let (range_start, range_end) =
+        extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
 
     // Add formula to the graph
     Graph::add_formula(graph, first_cell, range_start, range_end, 10, formula_array);
@@ -175,7 +189,6 @@ pub fn max_func(
             let idx = row * c + col;
             // println!("idx: {}, arr[idx]: {}", idx, arr[idx]);
             max_value = max(max_value, arr[idx]);
-            
         }
     }
 
@@ -190,9 +203,19 @@ pub fn max_func(
 /// Adds the formula and dependency to the graph for recalculation tracking.
 /// Returns 1 on success.
 
-pub fn sum_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut [i32], graph: &mut Graph, formula_array: &mut [Formula]) -> i32 {
+pub fn sum_func(
+    a: &str,
+    c: usize,
+    r: usize,
+    eq_idx: usize,
+    _: usize,
+    arr: &mut [i32],
+    graph: &mut Graph,
+    formula_array: &mut [Formula],
+) -> i32 {
     let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
-    let (range_start, range_end) = extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
+    let (range_start, range_end) =
+        extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
     Graph::add_formula(graph, first_cell, range_start, range_end, 12, formula_array);
     graph.add_range_to_graph(range_start, range_end, first_cell);
     let sum: i32 = (range_start..=range_end).map(|idx| arr[idx]).sum();
@@ -213,8 +236,7 @@ pub fn avg_func(
     graph: &mut Graph,
     formula_array: &mut [Formula],
 ) -> i32 {
-    let first_cell =
-        cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
+    let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
     let (range_start, range_end) =
         extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
 
@@ -252,8 +274,7 @@ pub fn stdev_func(
     graph: &mut Graph,
     formula_array: &mut [Formula],
 ) -> i32 {
-    let first_cell =
-        cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
+    let first_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
     let (range_start, range_end) =
         extract_range_cells(a, eq_idx, c, r, graph).unwrap_or_else(error_range);
 
@@ -278,8 +299,16 @@ pub fn stdev_func(
 /// Also stores the sleep duration in the target cell and logs the dependency.
 /// Returns 1 on success.
 
-pub fn sleep_func(a: &str, c: usize, r: usize, eq_idx: usize, _: usize, arr: &mut [i32], graph: &mut Graph, formula_array: &mut [Formula]) -> i32 {
-
+pub fn sleep_func(
+    a: &str,
+    c: usize,
+    r: usize,
+    eq_idx: usize,
+    _: usize,
+    arr: &mut [i32],
+    graph: &mut Graph,
+    formula_array: &mut [Formula],
+) -> i32 {
     let target_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
     let open_paren = a[eq_idx..].find('(').map(|i| i + eq_idx).unwrap_or(0);
     let close_paren = a[eq_idx..].find(')').map(|i| i + eq_idx).unwrap_or(a.len() - 1);

@@ -1,13 +1,8 @@
-use sheet::graph::{Graph, Formula};
+use sheet::graph::{Formula, Graph};
 use std::i32;
 
 fn setup(cells: usize) -> (Graph, Vec<i32>, Vec<Formula>, bool) {
-    (
-        Graph::new(cells),
-        vec![0; cells],
-        vec![Formula::default(); cells],
-        false,
-    )
+    (Graph::new(cells), vec![0; cells], vec![Formula::default(); cells], false)
 }
 #[test]
 fn test_add_duplicate_edge() {
@@ -72,7 +67,15 @@ fn test_topo_sort_with_cycle_and_ranges() {
     let mut visited = vec![false; 25];
     let mut on_stack = vec![false; 25];
     let mut stack = Vec::new();
-    graph.topo_sort_from_cell(0, 5, &mut visited, &mut on_stack, &mut stack, &formulas, &mut has_cycle); // Lines 205-206
+    graph.topo_sort_from_cell(
+        0,
+        5,
+        &mut visited,
+        &mut on_stack,
+        &mut stack,
+        &formulas,
+        &mut has_cycle,
+    ); // Lines 205-206
     assert!(has_cycle);
 }
 #[test]

@@ -1,9 +1,9 @@
 use sheet::function::*;
-use sheet::graph::{Graph, Formula};
+use sheet::graph::{Formula, Graph};
 
 fn setup_grid() -> (Vec<i32>, Graph, Vec<Formula>) {
     let mut arr = vec![0; 25]; // 5x5 grid
-    // Fill B2 and B3 with values: B2(6), B3(8)
+                               // Fill B2 and B3 with values: B2(6), B3(8)
     arr[1 + 1 * 5] = 6; // B2
     arr[1 + 2 * 5] = 8; // B3
     let graph = Graph::new(25);

@@ -4,13 +4,13 @@ use std::time::Instant;
 
 // Import everything upfront
 use sheet::display;
-use sheet::function;
-use sheet::parser;
-use sheet::util_ext;
 use sheet::display_ext;
+use sheet::function;
 use sheet::function_ext::{self, Cell};
 use sheet::graph_ext::{self, StateSnapshot};
+use sheet::parser;
 use sheet::parser_ext;
+use sheet::util_ext;
 
 static mut NUM_CELLS: usize = 0;
 static mut HAS_CYCLE: bool = false;
@@ -64,12 +64,14 @@ fn create_snapshot_extended(
 fn run_standard(r: usize, c: usize) {
     use sheet::display::{printer, scroller};
     use sheet::function::*;
-    use sheet::graph::{Graph, Formula};
+    use sheet::graph::{Formula, Graph};
     use sheet::parser::parser;
 
     let start = Instant::now();
     let num_cells = r * c;
-    unsafe { NUM_CELLS = num_cells; }
+    unsafe {
+        NUM_CELLS = num_cells;
+    }
 
     let mut graph = Graph::new(num_cells);
     let mut formula_array = vec![Formula::default(); num_cells];
@@ -116,7 +118,8 @@ fn run_standard(r: usize, c: usize) {
             }
             _ => {
                 if ['w', 'a', 's', 'd'].contains(&trimmed.chars().next().unwrap_or(' '))
-                    || trimmed.starts_with("scroll_to ") {
+                    || trimmed.starts_with("scroll_to ")
+                {
                     if scroller(trimmed, &mut arr, &mut currx, &mut curry, c, r, &mut graph) == -1 {
                         status = -1;
                     }
@@ -151,7 +154,7 @@ fn run_standard(r: usize, c: usize) {
 fn run_extended(r: usize, c: usize) -> Result<(), Box<dyn std::error::Error>> {
     use sheet::display_ext::{printer, scroller};
     use sheet::function_ext::Cell;
-    use sheet::graph_ext::{Graph, Formula, State};
+    use sheet::graph_ext::{Formula, Graph, State};
     use sheet::parser_ext::parser;
 
     let num_cells = r * c;
@@ -199,7 +202,15 @@ fn run_extended(r: usize, c: usize) -> Result<(), Box<dyn std::error::Error>> {
             }
             _ if input.starts_with("scroll_to ") => {
                 let cmd = input.replacen("scroll_to ", "", 1);
-                scroller(&format!("scroll_to {}", cmd), &arr, &mut currx, &mut curry, cols_i32, rows_i32, &graph)
+                scroller(
+                    &format!("scroll_to {}", cmd),
+                    &arr,
+                    &mut currx,
+                    &mut curry,
+                    cols_i32,
+                    rows_i32,
+                    &graph,
+                )
             }
             "undo" => {
                 if let Some(prev) = undo_stack.pop() {
@@ -229,7 +240,15 @@ fn run_extended(r: usize, c: usize) -> Result<(), Box<dyn std::error::Error>> {
                     undo_stack.remove(0);
                 }
                 redo_stack.clear();
-                parser(input, cols_i32, rows_i32, &mut arr, &mut graph, &mut formula_array, &mut state)
+                parser(
+                    input,
+                    cols_i32,
+                    rows_i32,
+                    &mut arr,
+                    &mut graph,
+                    &mut formula_array,
+                    &mut state,
+                )
             }
         };
 

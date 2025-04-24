@@ -7,38 +7,34 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
     }
 
     match (&v1.value, &v2.value) {
-        (CellValue::Int(i1), CellValue::Int(i2)) => {
-            match op {
-                '+' => Cell::new_int(i1 + i2),
-                '-' => Cell::new_int(i1 - i2),
-                '*' => Cell::new_int(i1 * i2),
-                '/' => {
-                    if *i2 == 0 {
-                        Cell::invalid()
-                    } else if *i1 % *i2 == 0 {
-                        Cell::new_int(i1 / i2)
-                    } else {
-                        Cell::new_float((*i1 as f64) / (*i2 as f64))
-                    }
+        (CellValue::Int(i1), CellValue::Int(i2)) => match op {
+            '+' => Cell::new_int(i1 + i2),
+            '-' => Cell::new_int(i1 - i2),
+            '*' => Cell::new_int(i1 * i2),
+            '/' => {
+                if *i2 == 0 {
+                    Cell::invalid()
+                } else if *i1 % *i2 == 0 {
+                    Cell::new_int(i1 / i2)
+                } else {
+                    Cell::new_float((*i1 as f64) / (*i2 as f64))
                 }
-                _ => Cell::invalid(),
             }
-        }
-        (CellValue::Float(f1), CellValue::Float(f2)) => {
-            match op {
-                '+' => Cell::new_float(f1 + f2),
-                '-' => Cell::new_float(f1 - f2),
-                '*' => Cell::new_float(f1 * f2),
-                '/' => {
-                    if *f2 == 0.0 {
-                        Cell::invalid()
-                    } else {
-                        Cell::new_float(f1 / f2)
-                    }
+            _ => Cell::invalid(),
+        },
+        (CellValue::Float(f1), CellValue::Float(f2)) => match op {
+            '+' => Cell::new_float(f1 + f2),
+            '-' => Cell::new_float(f1 - f2),
+            '*' => Cell::new_float(f1 * f2),
+            '/' => {
+                if *f2 == 0.0 {
+                    Cell::invalid()
+                } else {
+                    Cell::new_float(f1 / f2)
                 }
-                _ => Cell::invalid(),
             }
-        }
+            _ => Cell::invalid(),
+        },
         (CellValue::Int(i1), CellValue::Float(f2)) => {
             let f1 = *i1 as f64;
             match op {
@@ -81,8 +77,10 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
                 _ => Cell::invalid(),
             }
         }
-        _ => { println!("Invalid operation: {:?} {} {:?}", v1.value, op, v2.value);
-            Cell::invalid() },
+        _ => {
+            println!("Invalid operation: {:?} {} {:?}", v1.value, op, v2.value);
+            Cell::invalid()
+        }
     }
 }
 

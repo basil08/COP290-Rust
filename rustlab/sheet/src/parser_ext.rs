@@ -1,11 +1,10 @@
-use crate::graph_ext::State;
-use crate::graph_ext::Graph;
-use crate::graph_ext::Formula;
 use crate::function_ext::Cell;
+use crate::graph_ext::Formula;
+use crate::graph_ext::Graph;
+use crate::graph_ext::State;
 
-
-use crate::util_ext::{arithmetic_eval, return_optype};
 use crate::function_ext::CellValue;
+use crate::util_ext::{arithmetic_eval, return_optype};
 
 fn is_alpha(c: char) -> bool {
     c.is_ascii_uppercase() && ('A'..='Z').contains(&c)
@@ -51,7 +50,9 @@ pub fn cell_parser(a: &str, c: i32, r: i32, start: usize, end: usize) -> Result<
 /// Try to recognise the pattern in the first four integers.
 /// Returns "AP" | "GP" | "FIB" | "CONST" or None.
 pub fn detect_pattern(base: &[i32]) -> Option<String> {
-    if base.len() < 4 { return None; }
+    if base.len() < 4 {
+        return None;
+    }
     let [a, b, c, d] = [base[0], base[1], base[2], base[3]];
 
     // 1. Arithmetic progression  (early‑return!)
@@ -106,7 +107,7 @@ pub fn generate_sequence(base: &[i32], pattern: &str, total_len: usize) -> Vec<i
         "CONST" => {
             out.resize(total_len, base[0]);
         }
-        _ => {}  // unreachable
+        _ => {} // unreachable
     }
     out
 }
@@ -119,11 +120,13 @@ pub fn autofill(
     _rows: i32,
     arr: &mut [Cell],
 ) -> Result<(), &'static str> {
-
-    let col_idx = col_char.chars()
-                          .fold(0, |acc, ch| acc * 26 + (ch as usize - b'A' as usize + 1))
-                          .saturating_sub(1);
-    if col_idx >= cols as usize { return Err("Column index out of bounds"); }
+    let col_idx = col_char
+        .chars()
+        .fold(0, |acc, ch| acc * 26 + (ch as usize - b'A' as usize + 1))
+        .saturating_sub(1);
+    if col_idx >= cols as usize {
+        return Err("Column index out of bounds");
+    }
 
     /* ----- collect first four seed cells ----- */
     let mut seed = Vec::with_capacity(4);
@@ -134,13 +137,13 @@ pub fn autofill(
         }
         match arr[idx].value {
             CellValue::Int(v) => seed.push(v),
-            _                 => return Err("Only integer autofill supported"),
+            _ => return Err("Only integer autofill supported"),
         }
     }
 
     /* ----- recognise pattern & build sequence ----- */
-    let tag       = detect_pattern(&seed).ok_or("Pattern not recognised")?;
-    let sequence  = generate_sequence(&seed, &tag, length.min(arr.len() / cols as usize));
+    let tag = detect_pattern(&seed).ok_or("Pattern not recognised")?;
+    let sequence = generate_sequence(&seed, &tag, length.min(arr.len() / cols as usize));
 
     /* ----- write sequence back into the column ----- */
     for (row, val) in sequence.into_iter().enumerate() {
@@ -152,7 +155,6 @@ pub fn autofill(
 }
 
 fn value_func(
-    
     a: &str,
     c: i32,
     r: i32,
@@ -184,8 +186,7 @@ fn value_func(
         is_negative = a[pos..].starts_with('-');
         pos += 1;
     }
-    
-    
+
     if a[pos..pos_end].starts_with('"') && a[pos..pos_end].ends_with('"') {
         // Handle string values
         let string_value = &a[pos + 1..pos_end - 1]; // Remove surrounding quotes
@@ -194,29 +195,26 @@ fn value_func(
         graph.add_formula(first_cell, 0, 0, 16, formula_array);
         graph.recalc(c, arr, first_cell, formula_array, state)?;
         // println!("Stored string in cell {}: {}", first_cell, string_value);
-       
+
         return Ok(());
     } else if a[pos..pos_end].chars().all(is_digit) {
         second_cell = a[pos..pos_end].parse::<i32>().map_err(|_| "Invalid integer")?;
-    } 
-    else if a[pos..pos_end].chars().any(|ch| ch == '.') {
-    let float_value = a[pos..pos_end].parse::<f64>().map_err(|_| "Invalid float")?;
-    arr[first_cell as usize] = Cell::new_float(float_value);
-    // println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
-    // println!("[DEBUG] Float value: {}", float_value);
-    graph.add_formula(first_cell, 0, 0, 17, formula_array);
-    // println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
-    
-    graph.recalc(c, arr, first_cell, formula_array, state)?;
-    // println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
-    
-    return Ok(());
-    } 
-    else {
+    } else if a[pos..pos_end].chars().any(|ch| ch == '.') {
+        let float_value = a[pos..pos_end].parse::<f64>().map_err(|_| "Invalid float")?;
+        arr[first_cell as usize] = Cell::new_float(float_value);
+        // println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
+        // println!("[DEBUG] Float value: {}", float_value);
+        graph.add_formula(first_cell, 0, 0, 17, formula_array);
+        // println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
+
+        graph.recalc(c, arr, first_cell, formula_array, state)?;
+        // println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
+
+        return Ok(());
+    } else {
         second_cell = cell_parser(a, c, r, pos, pos_end - 1)?;
         // println!("[DEBUG] Cell reference: {}", second_cell);
         is_cell = true;
-        
     }
 
     // println!("[DEBUG] Before handling negative: second_cell = {}, is_negative = {}, is_cell = {}", second_cell, is_negative, is_cell);
@@ -244,7 +242,7 @@ fn value_func(
         // println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
         graph.add_edge(first_cell, second_cell as usize);
         // println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
-       
+
         let op_type = -1;
         // let mut v;
         // if let CellValue::String(_) = arr[second_cell as usize].value {
@@ -254,13 +252,12 @@ fn value_func(
         // } else {
         //     v = 0;
         // }
-        
+
         graph.add_formula(first_cell, second_cell, 0, op_type, formula_array);
         // println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
-       
+
         graph.recalc(c, arr, first_cell, formula_array, state)?;
         // println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
-       
     }
 
     if state.has_cycle {
@@ -287,7 +284,7 @@ fn arth_op(
     arr: &mut [Cell],
     graph: &mut Graph,
     formula_array: &mut [Formula],
-    state: &mut State
+    state: &mut State,
 ) -> Result<(), &'static str> {
     // println!("arithmetic operation");
     let mut operation = None;
@@ -307,7 +304,7 @@ fn arth_op(
     let (op, opindex) = operation.zip(opindex).ok_or("No valid operator found")?;
 
     let first_cell = cell_parser(a, c, r, 0, pos_equalto - 1)?;
-    
+
     state.old_value = arr[first_cell as usize].clone();
     state.old_op_type = formula_array[first_cell as usize].op_type;
     state.old_op_info1 = formula_array[first_cell as usize].op_info1;
@@ -372,7 +369,13 @@ fn arth_op(
         }
         (true, false) => {
             graph.add_edge(first_cell, second_cell as usize);
-            graph.add_formula(first_cell, second_cell, third_cell, return_optype(op), formula_array);
+            graph.add_formula(
+                first_cell,
+                second_cell,
+                third_cell,
+                return_optype(op),
+                formula_array,
+            );
         }
         (false, true) => {
             graph.add_edge(first_cell, third_cell as usize);
@@ -382,7 +385,13 @@ fn arth_op(
         (true, true) => {
             graph.add_edge(first_cell, second_cell as usize);
             graph.add_edge(first_cell, third_cell as usize);
-            graph.add_formula(first_cell, second_cell, third_cell, return_optype(op) + 4, formula_array);
+            graph.add_formula(
+                first_cell,
+                second_cell,
+                third_cell,
+                return_optype(op) + 4,
+                formula_array,
+            );
         }
     };
     // println!("[DEBUG] Value of first_cell: {:?}", arr[first_cell as usize].value);
@@ -427,9 +436,12 @@ fn range_func(
     }
 
     let eq_str = &a[pos_equalto..];
-    let open_paren = eq_str.find('(').map(|i| i + pos_equalto).ok_or("Missing opening parenthesis")?;
-    let close_paren = eq_str.find(')').map(|i| i + pos_equalto).ok_or("Missing closing parenthesis")?;
-    let colon_pos = a[open_paren + 1..].find(':').map(|i| i + open_paren + 1).ok_or("Missing colon")?;
+    let open_paren =
+        eq_str.find('(').map(|i| i + pos_equalto).ok_or("Missing opening parenthesis")?;
+    let close_paren =
+        eq_str.find(')').map(|i| i + pos_equalto).ok_or("Missing closing parenthesis")?;
+    let colon_pos =
+        a[open_paren + 1..].find(':').map(|i| i + open_paren + 1).ok_or("Missing colon")?;
 
     let range_start = cell_parser(a, c, r, open_paren + 1, colon_pos - 1)?;
     let range_end = cell_parser(a, c, r, colon_pos + 1, close_paren - 1)?;
@@ -461,7 +473,7 @@ fn sleep_func(
     arr: &mut [Cell],
     graph: &mut Graph,
     formula_array: &mut [Formula],
-    state: &mut State
+    state: &mut State,
 ) -> Result<(), &'static str> {
     let target_cell = cell_parser(a, c, r, 0, pos_equalto - 1)?;
     state.old_value = arr[target_cell as usize].clone();
@@ -474,8 +486,10 @@ fn sleep_func(
     }
 
     let eq_str = &a[pos_equalto..];
-    let open_paren = eq_str.find('(').map(|i| i + pos_equalto).ok_or("Missing opening parenthesis")?;
-    let close_paren = eq_str.find(')').map(|i| i + pos_equalto).ok_or("Missing closing parenthesis")?;
+    let open_paren =
+        eq_str.find('(').map(|i| i + pos_equalto).ok_or("Missing opening parenthesis")?;
+    let close_paren =
+        eq_str.find(')').map(|i| i + pos_equalto).ok_or("Missing closing parenthesis")?;
 
     let ref_cell = cell_parser(a, c, r, open_paren + 1, close_paren - 1);
     if let Ok(ref_cell) = ref_cell {
@@ -510,14 +524,14 @@ pub fn parser(
     arr: &mut [Cell],
     graph: &mut Graph,
     formula_array: &mut [Formula],
-    state: &mut State
+    state: &mut State,
 ) -> Result<(), &'static str> {
     state.num_cells = c as usize * r as usize;
     if a.starts_with('w') || a.starts_with('d') || a.starts_with('a') || a.starts_with('s') {
         return Ok(());
     }
     println!("a: {}", a);
-    if(a.starts_with("=autofill")) {
+    if (a.starts_with("=autofill")) {
         println!("hi");
         let parts: Vec<&str> = a.split_whitespace().collect();
         if parts.len() != 3 {
@@ -528,10 +542,9 @@ pub fn parser(
         let length = parts[2].parse::<usize>().map_err(|_| "Invalid length")?;
         println!("here");
         return autofill(col, length, c, r, arr);
-
     }
-//     let b = a.trim(); // strip leading/trailing whitespace
-// let b = a.to_lowercase(); // ensure consistent casing
+    //     let b = a.trim(); // strip leading/trailing whitespace
+    // let b = a.to_lowercase(); // ensure consistent casing
 
     // if b.starts_with("autofill") {
 
@@ -545,7 +558,7 @@ pub fn parser(
     //     println!("here");
     //     return autofill(col, length, c, r, arr);
     // }
-    
+
     let pos_equalto = a.find('=').ok_or("No equals sign found")?;
     let pos_end = a.len();
 
@@ -584,19 +597,26 @@ pub fn parser(
         let func_name = &a[pos_equalto + 1..a[pos_equalto..].find('(').unwrap() + pos_equalto];
         println!("[DEBUG] Function name: {}", func_name);
         match func_name {
-            "MIN" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 9)?,
-            "MAX" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 10)?,
-            "AVG" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 11)?,
-            "SUM" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 12)?,
-            "STDEV" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 13)?,
+            "MIN" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 9)?
+            }
+            "MAX" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 10)?
+            }
+            "AVG" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 11)?
+            }
+            "SUM" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 12)?
+            }
+            "STDEV" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 13)?
+            }
             "SLEEP" => sleep_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?,
-            
 
-    
             _ => return Err("Unknown function"),
         }
     }
 
     Ok(())
 }
-

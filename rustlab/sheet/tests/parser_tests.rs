@@ -102,7 +102,7 @@ fn test_parser_invalid_syntax() {
     let (mut graph, mut arr, mut formulas) = setup(5);
     let status = sheet::parser::parser("=42", 5, 1, &mut arr, &mut graph, &mut formulas);
     assert_eq!(status, -1);
-}  
+}
 
 // #[test]
 // fn test_formula_const_div_by_zero() {
@@ -191,7 +191,7 @@ fn test_parser_no_equals_sign() {
 // fn test_parser_positive_constant() {
 //     let (mut graph, mut arr, mut formulas) = setup(5);
 //     let status = sheet::parser::parser("A1=+42", 5, 1, &mut arr, &mut graph, &mut formulas); // Lines 205, 209-210, 212, 216, 221
-    
+
 // }
 
 // #[test]

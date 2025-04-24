@@ -1,8 +1,8 @@
-use yew::prelude::*;
-use wasm_bindgen_futures::spawn_local;
 use gloo_net::http::Request;
-use web_sys::{KeyboardEvent, InputEvent};
 use serde_json;
+use wasm_bindgen_futures::spawn_local;
+use web_sys::{InputEvent, KeyboardEvent};
+use yew::prelude::*;
 
 #[derive(Properties, PartialEq, Clone)]
 pub struct CellProps {
@@ -57,7 +57,7 @@ pub fn cell_component(props: &CellProps) -> Html {
                         "column_id": column_id,
                         "value": value
                     });
-                    
+
                     // Convert payload to string first
                     let json_string = match serde_json::to_string(&payload) {
                         Ok(s) => s,
@@ -66,11 +66,11 @@ pub fn cell_component(props: &CellProps) -> Html {
                             return;
                         }
                     };
-                    
+
                     // Properly handle the Result from body()
-                    let request = Request::post(&api_url)
-                        .header("Content-Type", "application/json");
-                        
+                    let request =
+                        Request::post(&api_url).header("Content-Type", "application/json");
+
                     // Handle the body() Result
                     let request_with_body = match request.body(json_string) {
                         Ok(req) => req,
@@ -79,7 +79,7 @@ pub fn cell_component(props: &CellProps) -> Html {
                             return;
                         }
                     };
-                    
+
                     // Now send the request
                     match request_with_body.send().await {
                         Ok(_) => log::info!("Cell updated successfully"),

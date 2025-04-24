@@ -1,8 +1,7 @@
-
-use std::thread::sleep;
-use std::time::Duration;
 use crate::function_ext::Cell;
 use crate::util_ext::arithmetic_eval;
+use std::thread::sleep;
+use std::time::Duration;
 
 use crate::function_ext::CellValue;
 /// A compact formula representation for spreadsheet cells.
@@ -21,9 +20,9 @@ pub struct Formula {
 
 #[derive(Clone)]
 pub struct GraphNode {
-     /// The dependent cell.
-     pub cell: i32,
-     /// Pointer to the next dependency in the list.
+    /// The dependent cell.
+    pub cell: i32,
+    /// Pointer to the next dependency in the list.
     pub next: Option<Box<GraphNode>>,
 }
 /// A rectangular range in the spreadsheet and the cell it affects.
@@ -46,46 +45,42 @@ pub struct Graph {
     /// Heads of adjacency lists where each index corresponds to a cell.
     pub adj_lists_head: Vec<Option<Box<GraphNode>>>,
     /// Head of a linked list representing all cell ranges with dependencies.
-   
     pub ranges_head: Option<Box<Range>>,
 }
 impl Clone for Graph {
     fn clone(&self) -> Self {
-        Graph {
-            adj_lists_head: self.adj_lists_head.clone(),
-            ranges_head: self.ranges_head.clone(),
-        }
+        Graph { adj_lists_head: self.adj_lists_head.clone(), ranges_head: self.ranges_head.clone() }
     }
 }
 
 impl Graph {
     /// Creates a new dependency graph for a spreadsheet with `num_cells` cells.
-///
-/// Initializes an adjacency list and empty range list.
+    ///
+    /// Initializes an adjacency list and empty range list.
     pub fn new(num_cells: usize) -> Self {
         let mut adj_lists_head = Vec::with_capacity(num_cells);
         for _ in 0..num_cells {
             adj_lists_head.push(None);
         }
-        Graph {
-            adj_lists_head,
-            ranges_head: None,
-        }
+        Graph { adj_lists_head, ranges_head: None }
     }
 
-/// Adds a formula for a specific cell, recording the operation type and operands.
-///
-/// - `cell`: The index of the cell being assigned a formula.
-/// - `c1`, `c2`: Operands (cell references or constants).
-/// - `op_type`: Type of operation (e.g., addition, SUM, AVG, etc.).
-/// - `formula_array`: Mutable reference to the formula array.
+    /// Adds a formula for a specific cell, recording the operation type and operands.
+    ///
+    /// - `cell`: The index of the cell being assigned a formula.
+    /// - `c1`, `c2`: Operands (cell references or constants).
+    /// - `op_type`: Type of operation (e.g., addition, SUM, AVG, etc.).
+    /// - `formula_array`: Mutable reference to the formula array.
 
-    pub fn add_formula(&mut self, cell: i32, c1: i32, c2: i32, op_type: i32, formula_array: &mut [Formula]) {
-        let mut new_formula = Formula {
-            op_type,
-            op_info1: -1,
-            op_info2: -1,
-        };
+    pub fn add_formula(
+        &mut self,
+        cell: i32,
+        c1: i32,
+        c2: i32,
+        op_type: i32,
+        formula_array: &mut [Formula],
+    ) {
+        let mut new_formula = Formula { op_type, op_info1: -1, op_info2: -1 };
         if op_type == 0 {
             new_formula.op_info1 = c1;
         } else {
@@ -96,13 +91,15 @@ impl Graph {
     }
 
     fn add_node(cell: i32) -> Box<GraphNode> {
-        Box::new(GraphNode {
-            cell,
-            next: None,
-        })
+        Box::new(GraphNode { cell, next: None })
     }
 
-    fn add_range(&mut self, start_cell: i32, end_cell: i32, dependent_cell: i32) -> Option<Box<Range>> {
+    fn add_range(
+        &mut self,
+        start_cell: i32,
+        end_cell: i32,
+        dependent_cell: i32,
+    ) -> Option<Box<Range>> {
         Some(Box::new(Range {
             start_cell,
             end_cell,
@@ -110,9 +107,9 @@ impl Graph {
             next: self.ranges_head.take(),
         }))
     }
-/// Adds a single dependency edge to the graph from `cell1` to `head_idx`.
-///
-/// Ensures no duplicate edges.
+    /// Adds a single dependency edge to the graph from `cell1` to `head_idx`.
+    ///
+    /// Ensures no duplicate edges.
 
     pub fn add_edge(&mut self, cell1: i32, head_idx: usize) {
         let head = &mut self.adj_lists_head[head_idx];
@@ -132,16 +129,16 @@ impl Graph {
         }
         current.next = Some(Self::add_node(cell1));
     }
-/// Adds a rectangular dependency range to the graph with the specified dependent cell.
+    /// Adds a rectangular dependency range to the graph with the specified dependent cell.
 
     pub fn add_range_to_graph(&mut self, start_cell: i32, end_cell: i32, dependent_cell: i32) {
         if let Some(new_range) = self.add_range(start_cell, end_cell, dependent_cell) {
             self.ranges_head = Some(new_range);
         }
     }
-/// Deletes a single dependency node (edge) pointing from `cell1` in the list at `head_idx`.
+    /// Deletes a single dependency node (edge) pointing from `cell1` in the list at `head_idx`.
 
-   pub fn delete_node(&mut self, cell1: i32, head_idx: usize) {
+    pub fn delete_node(&mut self, cell1: i32, head_idx: usize) {
         let head = &mut self.adj_lists_head[head_idx];
         if head.is_none() {
             return;
@@ -163,62 +160,59 @@ impl Graph {
         }
     }
 
-    
-    
-//     void DeleteRangeFromGraph(Graph *graph, int dependentCell)
-// {
-//     Range *current = graph->ranges_head;
-//     Range *prev = NULL;
+    //     void DeleteRangeFromGraph(Graph *graph, int dependentCell)
+    // {
+    //     Range *current = graph->ranges_head;
+    //     Range *prev = NULL;
 
-//     while (current != NULL)
-//     {
-//         if (current->dependentCell == dependentCell)
-//         {
-//             // Remove this range
-//             if (prev == NULL)
-//             {
-//                 // It's the head node
-//                 graph->ranges_head = current->next;
-//                 free(current);
-//                 current = graph->ranges_head;
-//             }
-//             else
-//             {
-//                 // Middle or end node
-//                 prev->next = current->next;
-//                 free(current);
-//                 current = prev->next;
-//             }
-//         }
-//         else
-//         {
-//             prev = current;
-//             current = current->next;
-//         }
-//     }
-// }
-/// Deletes any range that affects `dependent_cell`.
-///
-/// Used for cleaning up graph dependencies on formula deletion.
+    //     while (current != NULL)
+    //     {
+    //         if (current->dependentCell == dependentCell)
+    //         {
+    //             // Remove this range
+    //             if (prev == NULL)
+    //             {
+    //                 // It's the head node
+    //                 graph->ranges_head = current->next;
+    //                 free(current);
+    //                 current = graph->ranges_head;
+    //             }
+    //             else
+    //             {
+    //                 // Middle or end node
+    //                 prev->next = current->next;
+    //                 free(current);
+    //                 current = prev->next;
+    //             }
+    //         }
+    //         else
+    //         {
+    //             prev = current;
+    //             current = current->next;
+    //         }
+    //     }
+    // }
+    /// Deletes any range that affects `dependent_cell`.
+    ///
+    /// Used for cleaning up graph dependencies on formula deletion.
 
-pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
-    let mut current = &mut self.ranges_head;
+    pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
+        let mut current = &mut self.ranges_head;
 
-    while current.is_some() {
-        let should_remove = current.as_ref().unwrap().dependent_cell == dependent_cell;
-    
-        if should_remove {
-            let next = current.as_mut().unwrap().next.take();
-            *current = next;
-            break;
-        } else {
-            current = &mut current.as_mut().unwrap().next;
+        while current.is_some() {
+            let should_remove = current.as_ref().unwrap().dependent_cell == dependent_cell;
+
+            if should_remove {
+                let next = current.as_mut().unwrap().next.take();
+                *current = next;
+                break;
+            } else {
+                current = &mut current.as_mut().unwrap().next;
+            }
         }
     }
-    
-}
 
-/// Removes all dependency edges associated with a given formula.
+    /// Removes all dependency edges associated with a given formula.
 
     pub fn delete_edge(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
         let x = formula_array[cell as usize];
@@ -235,9 +229,9 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
             _ => {}
         }
     }
-/// Rebuilds all dependency edges for the given formula.
-///
-/// Useful after modifying a formula or loading a snapshot.
+    /// Rebuilds all dependency edges for the given formula.
+    ///
+    /// Useful after modifying a formula or loading a snapshot.
 
     pub fn add_edge_formula(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
         let x = formula_array[cell as usize];
@@ -262,17 +256,25 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
             _ => {}
         }
     }
-/// Internal DFS used to perform topological sort and detect cycles.
-///
-/// Traverses standard dependencies and range-based dependencies.
-/// - `cell`: Current DFS node
-/// - `visited`: Whether cell has been visited
-/// - `on_stack`: DFS recursion stack flag
-/// - `result`: Output topologically sorted result
-/// - `has_cycle`: Set to true if a cycle is detected
-/// - `cols`: Number of spreadsheet columns
+    /// Internal DFS used to perform topological sort and detect cycles.
+    ///
+    /// Traverses standard dependencies and range-based dependencies.
+    /// - `cell`: Current DFS node
+    /// - `visited`: Whether cell has been visited
+    /// - `on_stack`: DFS recursion stack flag
+    /// - `result`: Output topologically sorted result
+    /// - `has_cycle`: Set to true if a cycle is detected
+    /// - `cols`: Number of spreadsheet columns
 
-    fn dfs(&self, cell: i32, visited: &mut [bool], on_stack: &mut [bool], result: &mut Vec<i32>, has_cycle: &mut bool, cols: i32) {
+    fn dfs(
+        &self,
+        cell: i32,
+        visited: &mut [bool],
+        on_stack: &mut [bool],
+        result: &mut Vec<i32>,
+        has_cycle: &mut bool,
+        cols: i32,
+    ) {
         if *has_cycle {
             return;
         }
@@ -301,11 +303,17 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
             let start_col = start_cell % cols;
             let end_row = end_cell / cols;
             let end_col = end_cell % cols;
-            let (start_row, end_row) = if start_row > end_row { (end_row, start_row) } else { (start_row, end_row) };
-            let (start_col, end_col) = if start_col > end_col { (end_col, start_col) } else { (start_col, end_col) };
+            let (start_row, end_row) =
+                if start_row > end_row { (end_row, start_row) } else { (start_row, end_row) };
+            let (start_col, end_col) =
+                if start_col > end_col { (end_col, start_col) } else { (start_col, end_col) };
             let cell_row = cell / cols;
             let cell_col = cell % cols;
-            if cell_row >= start_row && cell_row <= end_row && cell_col >= start_col && cell_col <= end_col {
+            if cell_row >= start_row
+                && cell_row <= end_row
+                && cell_col >= start_col
+                && cell_col <= end_col
+            {
                 if !visited[dependent as usize] {
                     self.dfs(dependent, visited, on_stack, result, has_cycle, cols);
                 } else if on_stack[dependent as usize] {
@@ -321,13 +329,18 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
         on_stack[cell as usize] = false;
         result.push(cell);
     }
-/// Topologically sorts all cells reachable from `start_cell`.
-///
-/// Used before recalculation to ensure a valid execution order.
-///
-/// Returns an error if a circular dependency is detected.
+    /// Topologically sorts all cells reachable from `start_cell`.
+    ///
+    /// Used before recalculation to ensure a valid execution order.
+    ///
+    /// Returns an error if a circular dependency is detected.
 
-    pub fn topo_sort_from_cell(&self, start_cell: i32, cols: i32, state: &mut State) -> Result<Vec<i32>, &'static str> {
+    pub fn topo_sort_from_cell(
+        &self,
+        start_cell: i32,
+        cols: i32,
+        state: &mut State,
+    ) -> Result<Vec<i32>, &'static str> {
         let mut visited = vec![false; state.num_cells];
         let mut on_stack = vec![false; state.num_cells];
         let mut result = Vec::new();
@@ -340,20 +353,28 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
         result.reverse();
         Ok(result)
     }
-/// Recalculates all formulas reachable from `start_cell`
-/// in topological order based on the dependency graph.
-///
-/// Supports direct assignment, binary operations, range-based functions,
-/// and sleep-based side-effects.
+    /// Recalculates all formulas reachable from `start_cell`
+    /// in topological order based on the dependency graph.
+    ///
+    /// Supports direct assignment, binary operations, range-based functions,
+    /// and sleep-based side-effects.
 
-    pub fn recalc(&self, cols: i32, arr: &mut [Cell], start_cell: i32, formula_array: &[Formula], state: &mut State) -> Result<(), &'static str> {
+    pub fn recalc(
+        &self,
+        cols: i32,
+        arr: &mut [Cell],
+        start_cell: i32,
+        formula_array: &[Formula],
+        state: &mut State,
+    ) -> Result<(), &'static str> {
         let sorted_cells = self.topo_sort_from_cell(start_cell, cols, state)?;
         for &cell in &sorted_cells {
             let f = formula_array[cell as usize];
             match f.op_type {
-                -1 => { // for cell = cell
+                -1 => {
+                    // for cell = cell
                     let v1 = arr[f.op_info1 as usize].clone();
-                    
+
                     if !v1.is_valid {
                         // println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
                         arr[cell as usize] = Cell::invalid();
@@ -372,7 +393,7 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                 1..=4 => {
                     let v1 = arr[f.op_info1 as usize].clone();
                     let v2 = Cell::new_int(f.op_info2);
-                    
+
                     if !v1.is_valid {
                         // println!("Invalid value for cell {}: {:?}", f.op_info1, v1);
                         arr[cell as usize] = Cell::invalid();
@@ -412,8 +433,16 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                     let start_col = start_cell % cols;
                     let end_row = end_cell / cols;
                     let end_col = end_cell % cols;
-                    let (start_row, end_row) = if start_row > end_row { (end_row, start_row) } else { (start_row, end_row) };
-                    let (start_col, end_col) = if start_col > end_col { (end_col, start_col) } else { (start_col, end_col) };
+                    let (start_row, end_row) = if start_row > end_row {
+                        (end_row, start_row)
+                    } else {
+                        (start_row, end_row)
+                    };
+                    let (start_col, end_col) = if start_col > end_col {
+                        (end_col, start_col)
+                    } else {
+                        (start_col, end_col)
+                    };
                     let mut sum = 0.0;
                     let mut count = 0;
                     let mut min_val = f64::MAX;
@@ -457,18 +486,46 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                         continue;
                     }
                     arr[cell as usize] = match f.op_type {
-                        9 => if min_val.fract() == 0.0 { Cell::new_int(min_val as i32) } else { Cell::new_float(min_val) },
-                        10 => if max_val.fract() == 0.0 { Cell::new_int(max_val as i32) } else { Cell::new_float(max_val) },
+                        9 => {
+                            if min_val.fract() == 0.0 {
+                                Cell::new_int(min_val as i32)
+                            } else {
+                                Cell::new_float(min_val)
+                            }
+                        }
+                        10 => {
+                            if max_val.fract() == 0.0 {
+                                Cell::new_int(max_val as i32)
+                            } else {
+                                Cell::new_float(max_val)
+                            }
+                        }
                         11 => {
                             let avg = sum / count as f64;
-                            if avg.fract() == 0.0 { Cell::new_int(avg as i32) } else { Cell::new_float(avg) }
+                            if avg.fract() == 0.0 {
+                                Cell::new_int(avg as i32)
+                            } else {
+                                Cell::new_float(avg)
+                            }
                         }
-                        12 => if sum.fract() == 0.0 { Cell::new_int(sum as i32) } else { Cell::new_float(sum) },
+                        12 => {
+                            if sum.fract() == 0.0 {
+                                Cell::new_int(sum as i32)
+                            } else {
+                                Cell::new_float(sum)
+                            }
+                        }
                         13 => {
                             let mean = sum / count as f64;
-                            let variance = values.iter().map(|&x| (x - mean) * (x - mean)).sum::<f64>() / count as f64;
+                            let variance =
+                                values.iter().map(|&x| (x - mean) * (x - mean)).sum::<f64>()
+                                    / count as f64;
                             let stdev = variance.sqrt();
-                            if stdev.fract() == 0.0 { Cell::new_int(stdev as i32) } else { Cell::new_float(stdev) }
+                            if stdev.fract() == 0.0 {
+                                Cell::new_int(stdev as i32)
+                            } else {
+                                Cell::new_float(stdev)
+                            }
                         }
                         _ => unreachable!(),
                     };
@@ -503,13 +560,14 @@ pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
                 16 => {
                     // Do nothing — string is already assigned in arr, skip overwriting
                 }
-                17 =>{
-                    //Do nothing - float is already assigned 
+                17 => {
+                    //Do nothing - float is already assigned
                 }
-                
+
                 _ => {
                     // println!("Invalid formula type for cell {}: {:?}", cell, f.op_type); ;
-                 arr[cell as usize] = Cell::invalid()},
+                    arr[cell as usize] = Cell::invalid()
+                }
             }
         }
         Ok(())
@@ -563,10 +621,6 @@ pub struct StateSnapshot {
 
 impl Default for Formula {
     fn default() -> Self {
-        Formula {
-            op_type: 0,
-            op_info1: 0,
-            op_info2: 0,
-        }
+        Formula { op_type: 0, op_info1: 0, op_info2: 0 }
     }
 }

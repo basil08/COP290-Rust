@@ -14,7 +14,7 @@
 //     let (mut graph, _, mut formulas, _) = setup_graph_env(10);
 //     graph.add_edge(3, 5);
 //     assert!(graph.adj_lists_head[5].is_some());
-    
+
 //     formulas[3] = Formula { op_type: 1, op_info1: 5, op_info2: 0 };
 //     graph.delete_edge(3, 10, &formulas);
 //     assert!(graph.adj_lists_head[5].is_none());
@@ -65,8 +65,8 @@
 //     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap();
 //     assert_eq!(arr[0], Cell::new_int(75)); // 10+11+12+13+14
 // }
-use sheet::graph_ext::{Graph, Formula, State};
 use sheet::function_ext::{Cell, CellValue};
+use sheet::graph_ext::{Formula, Graph, State};
 
 use sheet::parser_ext::autofill;
 
@@ -78,13 +78,12 @@ fn setup_graph_env(size: usize) -> (Graph, Vec<Cell>, Vec<Formula>, State) {
     (graph, arr, formulas, state)
 }
 
-
 #[test]
 fn test_add_and_delete_edge() {
     let (mut graph, _, mut formulas, _) = setup_graph_env(10);
     graph.add_edge(3, 5);
     assert!(graph.adj_lists_head[5].is_some());
-    
+
     formulas[3] = Formula { op_type: 1, op_info1: 5, op_info2: 0 };
     graph.delete_edge(3, 10, &formulas);
     assert!(graph.adj_lists_head[5].is_none());
@@ -116,7 +115,6 @@ fn test_add_and_delete_range() {
 //     graph.recalc(5, &mut arr, 0, &formula_array, &mut state).unwrap();
 //     assert_eq!(arr[0], Cell::new_int(10 + 11 + 12 + 13 + 14));
 // }
-
 #[test]
 fn test_topo_sort_and_recalc_arithmetic() {
     let cell_count = 10;
@@ -426,9 +424,6 @@ fn test_recalc_invalid_op_type() {
     assert_eq!(arr[0], Cell::invalid());
 }
 
-
-
-
 // #[test]
 // fn test_add_and_delete_range() {
 //     let mut graph = Graph::new(5);
@@ -456,7 +451,6 @@ fn test_recalc_invalid_op_type() {
 //     graph.recalc(5, &mut arr, 0, &formula_array, &mut state).unwrap();
 //     assert_eq!(arr[0], Cell::new_int(10 + 11 + 12 + 13 + 14 + 15));
 // }
-
 
 // #[test]
 // fn test_topo_sort_cycle_detection() {

@@ -1,8 +1,8 @@
 use yew::prelude::*;
 
-mod table_component;
 mod cell_component; // Use your local cell component
-mod models; // Make sure this is included
+mod models;
+mod table_component; // Make sure this is included
 
 use table_component::TableComponent;
 // use cell_component::CellComponent; // Use your local cell component

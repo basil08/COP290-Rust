@@ -1,6 +1,6 @@
 use axum::{
-    routing::{get, post},
     extract::Json as ExtractJson,
+    routing::{get, post},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -68,7 +68,7 @@ async fn update_cell(
 
     // Update the cell value in our sheet data
     let mut sheet = state.write().await;
-    
+
     // Check if the indices are valid
     if row_index >= sheet.data.len() || col_index >= sheet.data[0].len() {
         return Json(UpdateResponse {
@@ -81,27 +81,19 @@ async fn update_cell(
     sheet.data[row_index][col_index].value = payload.value;
 
     // Return success response
-    Json(UpdateResponse {
-        success: true,
-        message: "Cell updated successfully".to_string(),
-    })
+    Json(UpdateResponse { success: true, message: "Cell updated successfully".to_string() })
 }
 
 #[tokio::main]
 async fn main() {
     // Initialize the sheet with default values
-    let initial_sheet = Sheet {
-        data: vec![vec![Cell { value: "0".into() }; 10]; 10],
-    };
-    
+    let initial_sheet = Sheet { data: vec![vec![Cell { value: "0".into() }; 10]; 10] };
+
     // Create the shared state
     let app_state = Arc::new(RwLock::new(initial_sheet));
 
     // Create a CORS layer that allows any origin
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+    let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any);
 
     // Add the CORS layer to your router
     let app = Router::new()
@@ -114,10 +106,5 @@ async fn main() {
     println!("✅ Server running at http://{}", addr);
     println!("🔄 Cell update endpoint available at http://{}/update-cell", addr);
 
-    axum::serve(
-        tokio::net::TcpListener::bind(addr).await.unwrap(),
-        app,
-    )
-    .await
-    .unwrap();
+    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app).await.unwrap();
 }

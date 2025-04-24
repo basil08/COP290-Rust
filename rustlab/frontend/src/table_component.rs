@@ -1,12 +1,12 @@
-use yew::prelude::*;
+use gloo::console::log;
 use gloo::net::http::Request;
 use wasm_bindgen_futures::spawn_local;
-use gloo::console::log;
+use yew::prelude::*;
 
 // mod cell_component;
 
-use crate::models::{Cell, Sheet};
 use crate::cell_component::CellComponent;
+use crate::models::{Cell, Sheet};
 
 #[function_component(TableComponent)]
 pub fn table_component() -> Html {
@@ -26,7 +26,7 @@ pub fn table_component() -> Html {
                                 Ok(sheet) => {
                                     sheet_state.set(Some(sheet));
                                     error_state.set(None);
-                                },
+                                }
                                 Err(e) => {
                                     error_state.set(Some(format!("Parse error: {}", e)));
                                 }
@@ -34,7 +34,7 @@ pub fn table_component() -> Html {
                         } else {
                             error_state.set(Some(format!("Server error: {}", response.status())));
                         }
-                    },
+                    }
                     Err(e) => {
                         error_state.set(Some(format!("Request failed: {}", e)));
                     }
@@ -78,7 +78,7 @@ pub fn table_component() -> Html {
                                                                 row_id={r.to_string()}
                                                                 column_id={c.to_string()}
                                                                 api_url={"http://127.0.0.1:3001/update-cell".to_string()}
-                                                        />  
+                                                        />
                                                     }
                                                 }).collect::<Html>()
                                             }
