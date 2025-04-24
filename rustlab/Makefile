@@ -34,4 +34,7 @@ clean:
 test:
 	$(CARGO) test
 
-.PHONY: all build run clean test
+docs:
+	$(CARGO) doc --open
+
+.PHONY: all build run clean test docs
