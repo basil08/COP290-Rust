@@ -179,6 +179,7 @@ async fn accept_connection(stream: TcpStream, clients: Clients) {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // initialize an empty hashmap to store clients
+    info!("Initializing server...");
     let clients: Clients = Arc::new(RwLock::new(HashMap::new()));
     let _ = env_logger::try_init();
 

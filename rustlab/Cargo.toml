@@ -3,6 +3,9 @@ members = [
     "cli",
     "sheet",
     "frontend",
-    "dummy_server"
-, "server", "crdt", "client"]
+    "dummy_server",
+    "server", 
+    "crdt", 
+    "ws_client"
+]
 resolver = "2"

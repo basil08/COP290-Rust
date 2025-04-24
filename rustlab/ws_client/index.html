@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+        body {
+            font-family: 'Raleway', sans-serif;
+        }
+        
+        .grid-container {
+            margin: 20px;
+            overflow: auto;
+        }
+        .grid {
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        .grid th, .grid td {
+            border: 1px solid #e0e0e0;
+            min-width: 80px;
+            height: 25px;
+            padding: 0;
+            position: relative;
+        }
+        .grid th {
+            background-color: #f8f9fa;
+            font-weight: normal;
+            text-align: center;
+            padding: 2px 4px;
+        }
+        .grid td.row-header {
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 2px 4px;
+        }
+        .grid td input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 2px 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: inherit;
+        }
+        .grid td input:focus {
+            outline: none;
+            box-shadow: inset 0 0 0 2px #1a73e8;
+        }
+        /* Excel-like frozen header and row numbers */
+        .grid thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background-color: #f8f9fa;
+        }
+        .grid td.row-header {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            background-color: #f8f9fa;
+        }
+        .grid thead th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            background-color: #f8f9fa;
+        }
+
+        .connect-name-input {
+            width: 100px;
+            padding: 5px;
+
+        }
+
+        .hidden {
+            display: none;
+        }
+
+    </style>
+    <link data-trunk rel="rust" data-bin="ws_client_bin" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    
+  </head>
+  <body>
+    <div class="container">
+        <h1>Rsheet - Collaborative spreadsheet program using WebSocket and CRDTs</h1>
+    </div>
+    <!-- <small>I have learnt two things from this project: 1) CRDTs are awesome, 2) I love Rust</small> -->
+  </body>
+</html>
