@@ -107,60 +107,16 @@ pub fn parser(
     let mut status = -1;
 
     if right.starts_with("MIN(") {
-        status = min_func(
-            trimmed,
-            cols,
-            rows,
-            eq_index,
-            trimmed.len(),
-            arr,
-            graph,
-            formula_array,
-        );
+        status = min_func(trimmed, cols, rows, eq_index, trimmed.len(), arr, graph, formula_array);
     } else if right.starts_with("MAX(") {
-        status = max_func(
-            trimmed,
-            cols,
-            rows,
-            eq_index,
-            trimmed.len(),
-            arr,
-            graph,
-            formula_array,
-        );
+        status = max_func(trimmed, cols, rows, eq_index, trimmed.len(), arr, graph, formula_array);
     } else if right.starts_with("AVG(") {
-        status = avg_func(
-            trimmed,
-            cols,
-            rows,
-            eq_index,
-            trimmed.len(),
-            arr,
-            graph,
-            formula_array,
-        );
+        status = avg_func(trimmed, cols, rows, eq_index, trimmed.len(), arr, graph, formula_array);
     } else if right.starts_with("SUM(") {
-        status = sum_func(
-            trimmed,
-            cols,
-            rows,
-            eq_index,
-            trimmed.len(),
-            arr,
-            graph,
-            formula_array,
-        );
+        status = sum_func(trimmed, cols, rows, eq_index, trimmed.len(), arr, graph, formula_array);
     } else if right.starts_with("STDEV(") {
-        status = stdev_func(
-            trimmed,
-            cols,
-            rows,
-            eq_index,
-            trimmed.len(),
-            arr,
-            graph,
-            formula_array,
-        );
+        status =
+            stdev_func(trimmed, cols, rows, eq_index, trimmed.len(), arr, graph, formula_array);
     } else if right.starts_with("SLEEP(") {
         // Ensure we have a valid SLEEP() format
         if right.ends_with(")") {
@@ -207,11 +163,7 @@ pub fn parser(
     } else if right.starts_with('-') && right[1..].chars().all(|c| c.is_ascii_digit()) {
         let const_val = right.parse::<i32>().unwrap_or(i32::MIN);
         // println!("const_val: {}", const_val);
-        formula_array[left_cell] = Formula {
-            op_type: 0,
-            op_info1: const_val,
-            op_info2: 0,
-        };
+        formula_array[left_cell] = Formula { op_type: 0, op_info1: const_val, op_info2: 0 };
 
         arr[left_cell] = const_val;
 
@@ -222,10 +174,8 @@ pub fn parser(
         // println!("Arithmetic expression detected: {}", right);
         // Parse left and right of operator
         let ops = ['+', '-', '*', '/'];
-        let (op_index, op_char) = right
-            .char_indices()
-            .find(|(_, ch)| ops.contains(ch))
-            .unwrap_or((0, '+'));
+        let (op_index, op_char) =
+            right.char_indices().find(|(_, ch)| ops.contains(ch)).unwrap_or((0, '+'));
 
         let left_expr = right[..op_index].trim();
         let right_expr = right[op_index + 1..].trim();
@@ -272,11 +222,8 @@ pub fn parser(
             let idx2 = cell_parser(right_expr, cols, rows, 0, right_expr.len() - 1, graph).unwrap();
             let val1 = left_expr.parse::<i32>().unwrap_or(i32::MIN);
             graph.add_edge(idx2, left_cell);
-            formula_array[left_cell] = Formula {
-                op_type: 15,
-                op_info1: val1,
-                op_info2: idx2 as i32,
-            };
+            formula_array[left_cell] =
+                Formula { op_type: 15, op_info1: val1, op_info2: idx2 as i32 };
             (val1, arr[idx2], 15)
         } else {
             let val1 = left_expr.parse::<i32>().unwrap_or(i32::MIN);
@@ -331,30 +278,18 @@ pub fn parser(
         if right.starts_with('-') && right[1..].chars().all(|c| c.is_ascii_digit()) {
             let const_val = right.parse::<i32>().unwrap_or(i32::MIN);
             // println!("const_val: {}", const_val);
-            formula_array[left_cell] = Formula {
-                op_type: 0,
-                op_info1: const_val,
-                op_info2: 0,
-            };
+            formula_array[left_cell] = Formula { op_type: 0, op_info1: const_val, op_info2: 0 };
             arr[left_cell] = const_val;
             return 1;
         }
 
         if let Ok(const_val) = right.parse::<i32>() {
-            formula_array[left_cell] = Formula {
-                op_type: 0,
-                op_info1: const_val,
-                op_info2: 0,
-            };
+            formula_array[left_cell] = Formula { op_type: 0, op_info1: const_val, op_info2: 0 };
             arr[left_cell] = const_val;
             status = 1;
         } else if let Some(idx) = cell_parser(right, cols, rows, 0, right.len() - 1, graph) {
             graph.add_edge(idx, left_cell);
-            formula_array[left_cell] = Formula {
-                op_type: 1,
-                op_info1: idx as i32,
-                op_info2: 0,
-            };
+            formula_array[left_cell] = Formula { op_type: 1, op_info1: idx as i32, op_info2: 0 };
             arr[left_cell] = arr[idx];
             status = 1;
         }
@@ -367,9 +302,7 @@ pub fn parser(
         }
         // status = 0;
 
-        graph.recalc(cols, arr, left_cell, formula_array, unsafe {
-            &mut HAS_CYCLE
-        });
+        graph.recalc(cols, arr, left_cell, formula_array, unsafe { &mut HAS_CYCLE });
         // println!("Graph recalculation complete");
         // println!("{}", arr[left_cell]);
         unsafe {

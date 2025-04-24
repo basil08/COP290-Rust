@@ -36,11 +36,7 @@ pub async fn undo_action(State(state): State<AppState>) -> Json<UndoRedoResponse
         let graph_copy = app_state.graph.clone();
 
         // Save current state to redo stack before reverting
-        app_state.redo_stack.push(create_snapshot(
-            &cells_copy,
-            &formula_array_copy,
-            &graph_copy,
-        ));
+        app_state.redo_stack.push(create_snapshot(&cells_copy, &formula_array_copy, &graph_copy));
 
         // Restore previous state
         app_state.cells = prev.arr;
@@ -51,15 +47,9 @@ pub async fn undo_action(State(state): State<AppState>) -> Json<UndoRedoResponse
         let cells_clone = app_state.cells.clone();
         update_simple_sheet_from_cells(&mut app_state.sheet, &cells_clone, 10, 10);
 
-        Json(UndoRedoResponse {
-            success: true,
-            message: "Action undone successfully".to_string(),
-        })
+        Json(UndoRedoResponse { success: true, message: "Action undone successfully".to_string() })
     } else {
-        Json(UndoRedoResponse {
-            success: false,
-            message: "Nothing to undo".to_string(),
-        })
+        Json(UndoRedoResponse { success: false, message: "Nothing to undo".to_string() })
     }
 }
 
@@ -74,11 +64,7 @@ pub async fn redo_action(State(state): State<AppState>) -> Json<UndoRedoResponse
         let graph_copy = app_state.graph.clone();
 
         // Save current state to undo stack before redoing
-        app_state.undo_stack.push(create_snapshot(
-            &cells_copy,
-            &formula_array_copy,
-            &graph_copy,
-        ));
+        app_state.undo_stack.push(create_snapshot(&cells_copy, &formula_array_copy, &graph_copy));
 
         // Restore next state
         app_state.cells = next.arr;
@@ -89,15 +75,9 @@ pub async fn redo_action(State(state): State<AppState>) -> Json<UndoRedoResponse
         // Also update the regular sheet model for API compatibility
         update_simple_sheet_from_cells(&mut app_state.sheet, &cells_clone, 10, 10);
 
-        Json(UndoRedoResponse {
-            success: true,
-            message: "Action redone successfully".to_string(),
-        })
+        Json(UndoRedoResponse { success: true, message: "Action redone successfully".to_string() })
     } else {
-        Json(UndoRedoResponse {
-            success: false,
-            message: "Nothing to redo".to_string(),
-        })
+        Json(UndoRedoResponse { success: false, message: "Nothing to redo".to_string() })
     }
 }
 
@@ -240,10 +220,7 @@ pub async fn update_cell(
     // app_state.sheet.data[row_index][col_index].value = string_to_cell(&payload.value);
 
     // Return success response
-    Json(UpdateResponse {
-        success: true,
-        message: "Cell updated successfully".to_string(),
-    })
+    Json(UpdateResponse { success: true, message: "Cell updated successfully".to_string() })
 }
 
 pub fn cell_parser(
@@ -288,104 +265,29 @@ pub fn cell_parser(
 
     if value {
         print!(" [DEBUG] Value function: ");
-        value_func(
-            a,
-            c,
-            r,
-            pos_equalto,
-            pos_end,
-            arr,
-            graph,
-            formula_array,
-            state,
-        )?;
+        value_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?;
     } else if arth_exp {
-        arth_op(
-            a,
-            c,
-            r,
-            pos_equalto,
-            pos_end,
-            arr,
-            graph,
-            formula_array,
-            state,
-        )?;
+        arth_op(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?;
     } else if func {
         let func_name = &a[pos_equalto + 1..a[pos_equalto..].find('(').unwrap() + pos_equalto];
         // println!("[DEBUG] Function name: {}", func_name);
         match func_name {
-            "MIN" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                9,
-            )?,
-            "MAX" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                10,
-            )?,
-            "AVG" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                11,
-            )?,
-            "SUM" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                12,
-            )?,
-            "STDEV" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                13,
-            )?,
-            "SLEEP" => sleep_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-            )?,
+            "MIN" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 9)?
+            }
+            "MAX" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 10)?
+            }
+            "AVG" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 11)?
+            }
+            "SUM" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 12)?
+            }
+            "STDEV" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 13)?
+            }
+            "SLEEP" => sleep_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?,
 
             _ => return Err("Unknown function"),
         }

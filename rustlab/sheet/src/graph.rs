@@ -47,11 +47,7 @@ pub struct Graph {
 impl Graph {
     /// Creates a new `Graph` with the given number of cells.
     pub fn new(num_cells: usize) -> Self {
-        Self {
-            adj_lists: vec![None; num_cells],
-            ranges: None,
-            num_cells,
-        }
+        Self { adj_lists: vec![None; num_cells], ranges: None, num_cells }
     }
     /// Returns a new boxed `Cell` node for the given index.
     pub fn add_cell(cell: usize) -> Option<Box<Cell>> {
@@ -73,10 +69,7 @@ impl Graph {
         if self.has_edge(from, to) {
             return;
         }
-        let new_cell = Box::new(Cell {
-            cell: to,
-            next: self.adj_lists[from].take(),
-        });
+        let new_cell = Box::new(Cell { cell: to, next: self.adj_lists[from].take() });
         self.adj_lists[from] = Some(new_cell);
     }
     /// Checks whether a directed edge already exists from one cell to another.
@@ -95,10 +88,7 @@ impl Graph {
 
     pub fn delete_edge(&mut self, from: usize, to: usize) {
         let mut head = self.adj_lists[from].take();
-        let mut dummy = Box::new(Cell {
-            cell: 0,
-            next: head,
-        });
+        let mut dummy = Box::new(Cell { cell: 0, next: head });
         let mut prev = &mut dummy;
 
         while let Some(mut node) = prev.next.take() {
@@ -146,11 +136,7 @@ impl Graph {
         op_type: i32,
         formula_array: &mut [Formula],
     ) {
-        formula_array[cell] = Formula {
-            op_type,
-            op_info1: c1 as i32,
-            op_info2: c2 as i32,
-        };
+        formula_array[cell] = Formula { op_type, op_info1: c1 as i32, op_info2: c2 as i32 };
     }
     /// Evaluates two integers with the specified arithmetic operation.
 
@@ -421,10 +407,7 @@ impl Graph {
 /// Clones a dependency list node recursively.
 impl Clone for Cell {
     fn clone(&self) -> Self {
-        Self {
-            cell: self.cell,
-            next: self.next.clone(),
-        }
+        Self { cell: self.cell, next: self.next.clone() }
     }
 }
 /// Clones a range list node recursively.

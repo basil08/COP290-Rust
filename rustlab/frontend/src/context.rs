@@ -24,10 +24,7 @@ impl Reducible for AppState {
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         match action {
-            AppAction::Refresh => AppState {
-                refresh_counter: self.refresh_counter + 1,
-            }
-            .into(),
+            AppAction::Refresh => AppState { refresh_counter: self.refresh_counter + 1 }.into(),
         }
     }
 }

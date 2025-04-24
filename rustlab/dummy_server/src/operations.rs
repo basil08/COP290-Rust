@@ -20,14 +20,8 @@ pub fn parse_cell_coordinates(coord_str: &str) -> Result<(usize, usize), &'stati
         return Err("Invalid cell coordinate format");
     }
 
-    let row = parts[0]
-        .trim()
-        .parse::<usize>()
-        .map_err(|_| "Invalid row")?;
-    let col = parts[1]
-        .trim()
-        .parse::<usize>()
-        .map_err(|_| "Invalid column")?;
+    let row = parts[0].trim().parse::<usize>().map_err(|_| "Invalid row")?;
+    let col = parts[1].trim().parse::<usize>().map_err(|_| "Invalid column")?;
 
     Ok((row, col))
 }

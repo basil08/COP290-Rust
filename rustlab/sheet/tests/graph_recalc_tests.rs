@@ -2,12 +2,7 @@ use sheet::graph::{Formula, Graph};
 use std::i32;
 
 fn setup(cells: usize) -> (Graph, Vec<i32>, Vec<Formula>, bool) {
-    (
-        Graph::new(cells),
-        vec![0; cells],
-        vec![Formula::default(); cells],
-        false,
-    )
+    (Graph::new(cells), vec![0; cells], vec![Formula::default(); cells], false)
 }
 #[test]
 fn test_add_duplicate_edge() {
@@ -190,11 +185,7 @@ fn test_recalc_constant_cell_division() {
 #[test]
 fn test_recalc_invalid_formula_type() {
     let (mut graph, mut arr, mut formulas, mut has_cycle) = setup(5);
-    formulas[0] = Formula {
-        op_type: 99,
-        op_info1: 0,
-        op_info2: 0,
-    }; // Lines 362, 364-367
+    formulas[0] = Formula { op_type: 99, op_info1: 0, op_info2: 0 }; // Lines 362, 364-367
     graph.recalc(5, &mut arr, 0, &mut formulas, &mut has_cycle);
     assert_eq!(arr[0], i32::MIN);
 }

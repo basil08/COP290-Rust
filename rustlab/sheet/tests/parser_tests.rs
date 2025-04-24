@@ -2,11 +2,7 @@ use sheet::graph::{Formula, Graph};
 use std::i32;
 
 fn setup(cells: usize) -> (Graph, Vec<i32>, Vec<Formula>) {
-    (
-        Graph::new(cells),
-        vec![0; cells],
-        vec![Formula::default(); cells],
-    )
+    (Graph::new(cells), vec![0; cells], vec![Formula::default(); cells])
 }
 
 #[test]

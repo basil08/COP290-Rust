@@ -8,9 +8,7 @@ pub struct Sheet {
 
 impl Sheet {
     pub fn new(rows: usize, cols: usize) -> Self {
-        Self {
-            data: vec![vec![Cell::new_int(0); cols]; rows],
-        }
+        Self { data: vec![vec![Cell::new_int(0); cols]; rows] }
     }
     pub fn get_data(&self) -> &Vec<Vec<Cell>> {
         &self.data
