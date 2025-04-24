@@ -1,0 +1,18 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+
+[dependencies]
+leptos = { version = "0.5.4", features = ["csr"] }
+serde_json = "1.0"
+leptos-use = "0.15.7"
+crdt = { version = "0.1.0", path = "../crdt" }
+rand = "0.8.5"

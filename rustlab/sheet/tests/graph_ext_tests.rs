@@ -84,11 +84,7 @@ fn test_add_and_delete_edge() {
     graph.add_edge(3, 5);
     assert!(graph.adj_lists_head[5].is_some());
 
-    formulas[3] = Formula {
-        op_type: 1,
-        op_info1: 5,
-        op_info2: 0,
-    };
+    formulas[3] = Formula { op_type: 1, op_info1: 5, op_info2: 0 };
     graph.delete_edge(3, 10, &formulas);
     assert!(graph.adj_lists_head[5].is_none());
 }
@@ -132,9 +128,7 @@ fn test_topo_sort_and_recalc_arithmetic() {
     graph.add_edge(0, 1);
     graph.add_formula(0, 1, 2, 1, &mut formula_array); // 5 + 2
 
-    graph
-        .recalc(5, &mut arr, 0, &formula_array, &mut state)
-        .unwrap();
+    graph.recalc(5, &mut arr, 0, &formula_array, &mut state).unwrap();
     assert_eq!(arr[0], Cell::new_int(7));
 }
 
@@ -183,9 +177,7 @@ fn test_const_plus_invalid_cell() {
     graph.add_formula(0, 1, 5, 1, &mut formula_array); // =B1 + 5
     graph.add_edge(0, 1);
 
-    graph
-        .recalc(5, &mut arr, 0, &mut formula_array, &mut state)
-        .unwrap();
+    graph.recalc(5, &mut arr, 0, &mut formula_array, &mut state).unwrap();
     assert_eq!(arr[0], Cell::invalid());
 }
 #[test]
@@ -200,16 +192,7 @@ fn test_add_edge_duplicate_and_append() {
 
     graph.add_edge(4, 5); // Append new edge 4 -> 5 (line 107)
     assert!(graph.adj_lists_head[5].as_ref().unwrap().next.is_some());
-    assert_eq!(
-        graph.adj_lists_head[5]
-            .as_ref()
-            .unwrap()
-            .next
-            .as_ref()
-            .unwrap()
-            .cell,
-        4
-    );
+    assert_eq!(graph.adj_lists_head[5].as_ref().unwrap().next.as_ref().unwrap().cell, 4);
 }
 
 #[test]
@@ -220,11 +203,7 @@ fn test_delete_node_non_head() {
     assert!(graph.adj_lists_head[5].is_some());
     assert!(graph.adj_lists_head[5].as_ref().unwrap().next.is_some());
 
-    formulas[3] = Formula {
-        op_type: 1,
-        op_info1: 5,
-        op_info2: 0,
-    };
+    formulas[3] = Formula { op_type: 1, op_info1: 5, op_info2: 0 };
     graph.delete_node(4, 5); // Delete non-head node (lines 195-198)
     assert_eq!(graph.adj_lists_head[5].as_ref().unwrap().cell, 3);
     assert!(graph.adj_lists_head[5].as_ref().unwrap().next.is_none());
@@ -237,11 +216,7 @@ fn test_delete_node_non_head() {
 fn test_delete_head_node() {
     let (mut graph, _, mut formulas, _) = setup_graph_env(10);
     graph.add_edge(3, 5);
-    formulas[3] = Formula {
-        op_type: 1,
-        op_info1: 5,
-        op_info2: 0,
-    };
+    formulas[3] = Formula { op_type: 1, op_info1: 5, op_info2: 0 };
     graph.delete_node(3, 5); // Delete head node (lines 189, 191-193)
     assert!(graph.adj_lists_head[5].is_none());
 }
@@ -252,17 +227,7 @@ fn test_add_multiple_ranges() {
     graph.add_range_to_graph(2, 4, 6);
     assert!(graph.ranges_head.is_some());
     assert_eq!(graph.ranges_head.as_ref().unwrap().dependent_cell, 6);
-    assert_eq!(
-        graph
-            .ranges_head
-            .as_ref()
-            .unwrap()
-            .next
-            .as_ref()
-            .unwrap()
-            .dependent_cell,
-        5
-    );
+    assert_eq!(graph.ranges_head.as_ref().unwrap().next.as_ref().unwrap().dependent_cell, 5);
 }
 
 #[test]
@@ -282,31 +247,19 @@ fn test_delete_non_head_range() {
 fn test_delete_edge_op_types() {
     let (mut graph, _, mut formulas, _) = setup_graph_env(10);
     // op_type = -1 (cell reference)
-    formulas[0] = Formula {
-        op_type: -1,
-        op_info1: 1,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: -1, op_info1: 1, op_info2: 0 };
     graph.add_edge(0, 1);
     graph.delete_edge(0, 5, &formulas); // Lines 221-222
     assert!(graph.adj_lists_head[1].is_none());
 
     // op_type = 1 (add cell + constant)
-    formulas[0] = Formula {
-        op_type: 1,
-        op_info1: 2,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: 1, op_info1: 2, op_info2: 0 };
     graph.add_edge(0, 2);
     graph.delete_edge(0, 5, &formulas); // Line 228
     assert!(graph.adj_lists_head[2].is_none());
 
     // op_type = 5 (add two cells)
-    formulas[0] = Formula {
-        op_type: 5,
-        op_info1: 3,
-        op_info2: 4,
-    };
+    formulas[0] = Formula { op_type: 5, op_info1: 3, op_info2: 4 };
     graph.add_edge(0, 3);
     graph.add_edge(0, 4);
     graph.delete_edge(0, 5, &formulas); // Line 234
@@ -314,31 +267,19 @@ fn test_delete_edge_op_types() {
     assert!(graph.adj_lists_head[4].is_none());
 
     // op_type = 9 (MIN range)
-    formulas[0] = Formula {
-        op_type: 9,
-        op_info1: 1,
-        op_info2: 3,
-    };
+    formulas[0] = Formula { op_type: 9, op_info1: 1, op_info2: 3 };
     graph.add_range_to_graph(1, 3, 0);
     graph.delete_edge(0, 5, &formulas); // Lines 248-254
     assert!(graph.ranges_head.is_none());
 
     // op_type = 14 (SLEEP)
-    formulas[0] = Formula {
-        op_type: 14,
-        op_info1: 5,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: 14, op_info1: 5, op_info2: 0 };
     graph.add_edge(0, 5);
     graph.delete_edge(0, 5, &formulas); // Lines 257-258
     assert!(graph.adj_lists_head[5].is_none());
 
     // op_type = 15 (division constant / cell)
-    formulas[0] = Formula {
-        op_type: 15,
-        op_info1: 0,
-        op_info2: 6,
-    };
+    formulas[0] = Formula { op_type: 15, op_info1: 0, op_info2: 6 };
     graph.add_edge(0, 6);
     graph.delete_edge(0, 5, &formulas); // Lines 266-267
     assert!(graph.adj_lists_head[6].is_none());
@@ -348,48 +289,28 @@ fn test_delete_edge_op_types() {
 fn test_add_edge_formula_op_types() {
     let (mut graph, _, mut formulas, _) = setup_graph_env(10);
     // op_type = -1
-    formulas[0] = Formula {
-        op_type: -1,
-        op_info1: 1,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: -1, op_info1: 1, op_info2: 0 };
     graph.add_edge_formula(0, 5, &formulas); // Lines 260-264
     assert!(graph.adj_lists_head[1].is_some());
 
     // op_type = 5
-    formulas[0] = Formula {
-        op_type: 5,
-        op_info1: 2,
-        op_info2: 3,
-    };
+    formulas[0] = Formula { op_type: 5, op_info1: 2, op_info2: 3 };
     graph.add_edge_formula(0, 5, &formulas); // Lines 260-264
     assert!(graph.adj_lists_head[2].is_some());
     assert!(graph.adj_lists_head[3].is_some());
 
     // op_type = 9
-    formulas[0] = Formula {
-        op_type: 9,
-        op_info1: 4,
-        op_info2: 6,
-    };
+    formulas[0] = Formula { op_type: 9, op_info1: 4, op_info2: 6 };
     graph.add_edge_formula(0, 5, &formulas); // Lines 260-264
     assert!(graph.ranges_head.is_some());
 
     // op_type = 14 (SLEEP with non-self reference)
-    formulas[0] = Formula {
-        op_type: 14,
-        op_info1: 7,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: 14, op_info1: 7, op_info2: 0 };
     graph.add_edge_formula(0, 5, &formulas); // Lines 260-264
     assert!(graph.adj_lists_head[7].is_some());
 
     // op_type = 15
-    formulas[0] = Formula {
-        op_type: 15,
-        op_info1: 0,
-        op_info2: 8,
-    };
+    formulas[0] = Formula { op_type: 15, op_info1: 0, op_info2: 8 };
     graph.add_edge_formula(0, 5, &formulas); // Lines 260-264
     assert!(graph.adj_lists_head[8].is_some());
 }
@@ -398,11 +319,7 @@ fn test_recalc_cell_reference_invalid() {
     let (mut graph, mut arr, mut formulas, mut state) = setup_graph_env(5);
     state.num_cells = 5;
     arr[1] = Cell::invalid();
-    formulas[0] = Formula {
-        op_type: -1,
-        op_info1: 1,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: -1, op_info1: 1, op_info2: 0 };
     graph.add_edge(0, 1);
 
     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap(); // Lines 358-363
@@ -414,11 +331,7 @@ fn test_recalc_arithmetic_cell_constant() {
     let (mut graph, mut arr, mut formulas, mut state) = setup_graph_env(5);
     state.num_cells = 5;
     arr[1] = Cell::new_int(10);
-    formulas[0] = Formula {
-        op_type: 3,
-        op_info1: 1,
-        op_info2: 2,
-    }; // B1 * 2
+    formulas[0] = Formula { op_type: 3, op_info1: 1, op_info2: 2 }; // B1 * 2
     graph.add_edge(0, 1);
 
     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap(); // Lines 381-386
@@ -435,11 +348,7 @@ fn test_recalc_arithmetic_two_cells() {
     state.num_cells = 5;
     arr[1] = Cell::new_int(10);
     arr[2] = Cell::new_int(5);
-    formulas[0] = Formula {
-        op_type: 7,
-        op_info1: 1,
-        op_info2: 2,
-    }; // B1 * C1
+    formulas[0] = Formula { op_type: 7, op_info1: 1, op_info2: 2 }; // B1 * C1
     graph.add_edge(0, 1);
     graph.add_edge(0, 2);
 
@@ -452,11 +361,7 @@ fn test_recalc_range_invalid() {
     let (mut graph, mut arr, mut formulas, mut state) = setup_graph_env(25);
     state.num_cells = 25;
     arr[6] = Cell::invalid(); // B2
-    formulas[0] = Formula {
-        op_type: 12,
-        op_info1: 6,
-        op_info2: 11,
-    }; // SUM(B2:C3)
+    formulas[0] = Formula { op_type: 12, op_info1: 6, op_info2: 11 }; // SUM(B2:C3)
     graph.add_range_to_graph(6, 11, 0);
 
     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap(); // Line 414
@@ -468,11 +373,7 @@ fn test_recalc_sleep() {
     let (mut graph, mut arr, mut formulas, mut state) = setup_graph_env(5);
     state.num_cells = 5;
     arr[1] = Cell::new_int(1); // Sleep for 1 second
-    formulas[0] = Formula {
-        op_type: 14,
-        op_info1: 1,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: 14, op_info1: 1, op_info2: 0 };
     graph.add_edge(0, 1);
 
     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap(); // Line 420
@@ -484,11 +385,7 @@ fn test_recalc_division_constant_cell() {
     let (mut graph, mut arr, mut formulas, mut state) = setup_graph_env(5);
     state.num_cells = 5;
     arr[1] = Cell::new_int(10);
-    formulas[0] = Formula {
-        op_type: 15,
-        op_info1: 20,
-        op_info2: 1,
-    }; // 20 / B1
+    formulas[0] = Formula { op_type: 15, op_info1: 20, op_info2: 1 }; // 20 / B1
     graph.add_edge(0, 1);
 
     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap(); // Lines 424-425, 428-429
@@ -500,11 +397,7 @@ fn test_recalc_string() {
     let (mut graph, mut arr, mut formulas, mut state) = setup_graph_env(5);
     state.num_cells = 5;
     arr[0] = Cell::new_string("test".to_string());
-    formulas[0] = Formula {
-        op_type: 16,
-        op_info1: 0,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: 16, op_info1: 0, op_info2: 0 };
 
     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap(); // Lines 435-437
     assert_eq!(arr[0], Cell::new_string("test".to_string()));
@@ -515,11 +408,7 @@ fn test_recalc_float() {
     let (mut graph, mut arr, mut formulas, mut state) = setup_graph_env(5);
     state.num_cells = 5;
     arr[0] = Cell::new_float(3.14);
-    formulas[0] = Formula {
-        op_type: 17,
-        op_info1: 0,
-        op_info2: 0,
-    };
+    formulas[0] = Formula { op_type: 17, op_info1: 0, op_info2: 0 };
 
     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap(); // Lines 439-440
     assert_eq!(arr[0], Cell::new_float(3.14));
@@ -529,11 +418,7 @@ fn test_recalc_float() {
 fn test_recalc_invalid_op_type() {
     let (mut graph, mut arr, mut formulas, mut state) = setup_graph_env(5);
     state.num_cells = 5;
-    formulas[0] = Formula {
-        op_type: 999,
-        op_info1: 0,
-        op_info2: 0,
-    }; // Invalid op_type
+    formulas[0] = Formula { op_type: 999, op_info1: 0, op_info2: 0 }; // Invalid op_type
 
     graph.recalc(5, &mut arr, 0, &formulas, &mut state).unwrap(); // Line 442
     assert_eq!(arr[0], Cell::invalid());
@@ -671,9 +556,7 @@ fn test_minimum_value_in_range() {
     graph.add_formula(0, 5, 7, 9, &mut formula_array);
     graph.add_range_to_graph(5, 7, 0);
 
-    graph
-        .recalc(4, &mut arr, 0, &mut formula_array, &mut state)
-        .unwrap();
+    graph.recalc(4, &mut arr, 0, &mut formula_array, &mut state).unwrap();
     assert_eq!(arr[0], Cell::new_int(-2));
 }
 
@@ -690,8 +573,6 @@ fn test_division_by_zero_cell_cell() {
     graph.add_formula(0, 1, 2, 8, &mut formula_array);
     graph.add_edge(0, 1);
     graph.add_edge(0, 2);
-    graph
-        .recalc(5, &mut arr, 0, &mut formula_array, &mut state)
-        .unwrap();
+    graph.recalc(5, &mut arr, 0, &mut formula_array, &mut state).unwrap();
     assert_eq!(arr[0], Cell::invalid());
 }

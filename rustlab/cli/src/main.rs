@@ -197,9 +197,9 @@ fn run_extended(r: usize, c: usize) -> Result<(), Box<dyn std::error::Error>> {
                 output_enabled = true;
                 Ok(())
             }
-            "w" | "a" | "s" | "d" => scroller(
-                input, &arr, &mut currx, &mut curry, cols_i32, rows_i32, &graph,
-            ),
+            "w" | "a" | "s" | "d" => {
+                scroller(input, &arr, &mut currx, &mut curry, cols_i32, rows_i32, &graph)
+            }
             _ if input.starts_with("scroll_to ") => {
                 let cmd = input.replacen("scroll_to ", "", 1);
                 scroller(

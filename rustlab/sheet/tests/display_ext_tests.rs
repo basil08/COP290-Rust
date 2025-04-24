@@ -8,11 +8,7 @@ fn test_add_and_delete_edge() {
     graph.add_edge(2, 0);
     graph.add_edge(3, 0);
     let mut formulas = vec![Formula::default(); 5];
-    formulas[2] = Formula {
-        op_type: 1,
-        op_info1: 0,
-        op_info2: 0,
-    };
+    formulas[2] = Formula { op_type: 1, op_info1: 0, op_info2: 0 };
     graph.delete_edge(2, 5, &formulas);
     assert_eq!(graph.adj_lists_head[0].as_ref().unwrap().cell, 3);
 }

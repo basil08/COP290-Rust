@@ -22,11 +22,7 @@ use types::{AppState, ExtendedState};
 
 // Helper function to create a snapshot (similar to the CLI version)
 fn create_snapshot(arr: &Vec<Cell>, formula_array: &Vec<Formula>, graph: &Graph) -> StateSnapshot {
-    StateSnapshot {
-        arr: arr.clone(),
-        formula_array: formula_array.clone(),
-        graph: graph.clone(),
-    }
+    StateSnapshot { arr: arr.clone(), formula_array: formula_array.clone(), graph: graph.clone() }
 }
 
 #[tokio::main]
@@ -70,10 +66,7 @@ async fn main() {
     let app_state = Arc::new(RwLock::new(extended_state));
 
     // Create a CORS layer that allows any origin
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+    let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any);
 
     // Add the CORS layer to your router
     let app = Router::new()
@@ -87,15 +80,10 @@ async fn main() {
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
     println!("✅ Server running at http://{}", addr);
-    println!(
-        "🔄 Cell update endpoint available at http://{}/update-cell",
-        addr
-    );
+    println!("🔄 Cell update endpoint available at http://{}/update-cell", addr);
     println!("📝 Query endpoint available at http://{}/api/query", addr);
     println!("↩️ Undo endpoint available at http://{}/api/undo", addr);
     println!("↪️ Redo endpoint available at http://{}/api/redo", addr);
 
-    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
-        .await
-        .unwrap();
+    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app).await.unwrap();
 }

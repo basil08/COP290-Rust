@@ -371,15 +371,7 @@ fn test_parser_valid_expression() {
     let mut state = State::new();
     state.num_cells = 100;
 
-    let result = parser(
-        "B1=3",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result = parser("B1=3", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert_eq!(result, Ok(()));
     assert_eq!(arr[1], Cell::new_int(3));
 }
@@ -426,15 +418,8 @@ fn test_parser_const_assignment() {
     let mut arr = vec![Cell::default(); 100];
     let mut graph = Graph::new(100);
     let mut formula_array = vec![Formula::default(); 100];
-    let result = parser(
-        "A1=5",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut State::new(),
-    );
+    let result =
+        parser("A1=5", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut State::new());
     assert!(result.is_ok());
 
     assert_eq!(arr[0], Cell::new_int(5));
@@ -445,15 +430,8 @@ fn test_parser_binary_op() {
     let mut graph = Graph::new(100);
     let mut formula_array = vec![Formula::default(); 100];
     arr[1] = Cell::new_int(4);
-    let result = parser(
-        "A1=A2+3",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut State::new(),
-    );
+    let result =
+        parser("A1=A2+3", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut State::new());
     assert!(result.is_ok());
 }
 #[test]
@@ -480,15 +458,8 @@ fn test_parser_string_assignment() {
     let mut arr = vec![Cell::default(); 100];
     let mut graph = Graph::new(100);
     let mut formula_array = vec![Formula::default(); 100];
-    let result = parser(
-        "A1=\"hello\"",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut State::new(),
-    );
+    let result =
+        parser("A1=\"hello\"", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut State::new());
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_string("hello".to_string()));
 }
@@ -499,15 +470,8 @@ fn test_parser_invalid_function_name() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=BOGUS(B1:B3)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=BOGUS(B1:B3)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_err());
 }
 #[test]
@@ -517,15 +481,7 @@ fn test_parser_float_assignment() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=3.14",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result = parser("A1=3.14", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_float(3.14));
 }
@@ -537,15 +493,7 @@ fn test_parser_const_division_formula() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=10/2",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result = parser("A1=10/2", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(5));
 }
@@ -556,15 +504,7 @@ fn test_parser_float_division_formula() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=7/2",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result = parser("A1=7/2", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_float(3.5));
 }
@@ -577,15 +517,8 @@ fn test_parser_stdev_with_invalid_type() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=STDEV(B1:B2)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=STDEV(B1:B2)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0].is_valid, false);
 }
@@ -599,15 +532,8 @@ fn test_parser_sleep_self_value_cycle() {
     let mut state = State::new();
     state.num_cells = 100;
 
-    let result = parser(
-        "A1=SLEEP(A1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=SLEEP(A1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_err());
     assert!(state.has_cycle);
 }
@@ -630,15 +556,8 @@ fn test_parser_max_empty_range() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=MAX(B1:B1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=MAX(B1:B1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert!(!arr[0].is_valid);
 }
@@ -649,15 +568,8 @@ fn test_parser_avg_empty_range() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=AVG(B1:B1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=AVG(B1:B1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert!(!arr[0].is_valid);
 }
@@ -669,15 +581,7 @@ fn test_parser_cell_to_cell_assignment() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=B2",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result = parser("A1=B2", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(99));
 }
@@ -689,15 +593,8 @@ fn test_parser_sleep_indirect_cell() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=SLEEP(B1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=SLEEP(B1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(0));
 }
@@ -712,15 +609,8 @@ fn test_parser_min_range() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=MIN(B1:D1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=MIN(B1:D1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(5));
 }
@@ -735,15 +625,8 @@ fn test_parser_avg_range() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=AVG(B1:D1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=AVG(B1:D1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(20));
 }
@@ -763,15 +646,8 @@ fn test_parser_stdev_valid_range() {
     let mut graph = Graph::new(100);
     let mut state = State::new();
 
-    let result = parser(
-        "A1=STDEV(B1:I1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result =
+        parser("A1=STDEV(B1:I1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert!(arr[0].is_valid);
     // We don’t assert exact float due to rounding, but you could use pattern matching if needed.
@@ -782,15 +658,7 @@ fn test_parser_invalid_cell_assignment() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "5=5",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result = parser("5=5", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_err());
 }
 
@@ -800,15 +668,7 @@ fn test_parser_negative_constant() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=-5",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    );
+    let result = parser("A1=-5", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state);
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(-5));
 }
@@ -819,15 +679,7 @@ fn test_parser_positive_constant() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=+5",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 204, 207, 210
+    let result = parser("A1=+5", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 204, 207, 210
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(5));
 }
@@ -838,15 +690,7 @@ fn test_parser_empty_string() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=\"\"",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 234-237
+    let result = parser("A1=\"\"", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 234-237
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_string("".to_string()));
 }
@@ -857,15 +701,8 @@ fn test_parser_autofill_missing_length() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "=autofill A",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 493-498
+    let result =
+        parser("=autofill A", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 493-498
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "Usage: autofill <column> <length>");
 }
@@ -876,15 +713,7 @@ fn test_parser_no_digit_before_operator() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=+B1",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 521-524, 526-530
+    let result = parser("A1=+B1", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 521-524, 526-530
     assert!(result.is_ok()); // Should parse as value function
 }
 
@@ -894,15 +723,7 @@ fn test_parser_unknown_function() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=XYZ(B1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 550, 552-555
+    let result = parser("A1=XYZ(B1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 550, 552-555
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "Unknown function");
 }
@@ -910,22 +731,11 @@ fn test_parser_unknown_function() {
 fn test_parser_sleep_with_prior_formula() {
     let mut arr = vec![Cell::default(); 100];
     let mut formula_array = vec![Formula::default(); 100];
-    formula_array[0] = Formula {
-        op_type: 1,
-        op_info1: 1,
-        op_info2: 2,
-    };
+    formula_array[0] = Formula { op_type: 1, op_info1: 1, op_info2: 2 };
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=SLEEP(1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 467-470
+    let result =
+        parser("A1=SLEEP(1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 467-470
     assert!(result.is_ok());
 }
 
@@ -935,15 +745,7 @@ fn test_parser_sleep_missing_paren() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=SLEEP(1",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 472-473
+    let result = parser("A1=SLEEP(1", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 472-473
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "Missing closing parenthesis");
 }
@@ -964,15 +766,8 @@ fn test_parser_sleep_constant() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=SLEEP(2)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 485-487
+    let result =
+        parser("A1=SLEEP(2)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 485-487
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(2));
 }
@@ -981,22 +776,11 @@ fn test_parser_sleep_constant() {
 fn test_parser_range_with_prior_formula() {
     let mut arr = vec![Cell::default(); 100];
     let mut formula_array = vec![Formula::default(); 100];
-    formula_array[0] = Formula {
-        op_type: 1,
-        op_info1: 1,
-        op_info2: 2,
-    };
+    formula_array[0] = Formula { op_type: 1, op_info1: 1, op_info2: 2 };
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=MIN(B1:C1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 437-439
+    let result =
+        parser("A1=MIN(B1:C1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 437-439
     assert!(result.is_ok());
 }
 
@@ -1006,15 +790,8 @@ fn test_parser_missing_paren() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=MIN(B1:C1",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 443-444
+    let result =
+        parser("A1=MIN(B1:C1", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 443-444
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "Missing closing parenthesis");
 }
@@ -1025,15 +802,8 @@ fn test_parser_missing_colon() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=MIN(B1 C1)",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Line 445
+    let result =
+        parser("A1=MIN(B1 C1)", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Line 445
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "Missing colon");
 }
@@ -1054,15 +824,7 @@ fn test_parser_positive_first_operand() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=+2+3",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 364, 366, 368
+    let result = parser("A1=+2+3", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 364, 366, 368
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(5));
 }
@@ -1073,17 +835,9 @@ fn test_parser_positive_second_operand() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=2+3",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 378-380, 382-385
-       // assert!(result.is_err());
-       // assert_eq!(result.unwrap_err(), "No valid operator found");
+    let result = parser("A1=2+3", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 378-380, 382-385
+                                                                                                 // assert!(result.is_err());
+                                                                                                 // assert_eq!(result.unwrap_err(), "No valid operator found");
     assert!(result.is_ok());
 }
 
@@ -1094,15 +848,7 @@ fn test_parser_constant_cell_division() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=10/B1",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 423, 425-426
+    let result = parser("A1=10/B1", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 423, 425-426
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(2));
 }
@@ -1115,15 +861,7 @@ fn test_parser_cell_cell_subtraction() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=B1-C1",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Line 429
+    let result = parser("A1=B1-C1", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Line 429
     assert!(result.is_ok());
     assert_eq!(arr[0], Cell::new_int(7));
 }
@@ -1134,15 +872,7 @@ fn test_parser_invalid_cell_reference() {
     let mut formula_array = vec![Formula::default(); 100];
     let mut graph = Graph::new(100);
     let mut state = State::new();
-    let result = parser(
-        "A1=Z100",
-        10,
-        10,
-        &mut arr,
-        &mut graph,
-        &mut formula_array,
-        &mut state,
-    ); // Lines 274-275
+    let result = parser("A1=Z100", 10, 10, &mut arr, &mut graph, &mut formula_array, &mut state); // Lines 274-275
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "Cell reference out of bounds");
 }

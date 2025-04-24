@@ -71,16 +71,5 @@ fn test_scroller_invalid_command() {
     let mut arr = vec![0; c * r];
     let mut graph = Graph::new(c * r);
 
-    assert_eq!(
-        scroller(
-            "invalid_command",
-            &mut arr,
-            &mut x,
-            &mut y,
-            c,
-            r,
-            &mut graph
-        ),
-        -1
-    );
+    assert_eq!(scroller("invalid_command", &mut arr, &mut x, &mut y, c, r, &mut graph), -1);
 }
