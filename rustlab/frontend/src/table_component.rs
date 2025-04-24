@@ -1,30 +1,31 @@
-use yew::prelude::*;
+use gloo::console::log;
 use gloo::net::http::Request;
 use wasm_bindgen_futures::spawn_local;
-use gloo::console::log;
+use yew::prelude::*;
 
 // mod cell_component;
-use sheet::function_ext::{Cell, CellValue};
-use crate::models::*;
 use crate::cell_component::CellComponent;
 use crate::context::AppContext;
+use crate::models::*;
+use sheet::function_ext::{Cell, CellValue};
 
 #[function_component(TableComponent)]
 pub fn table_component() -> Html {
     let sheet_state = use_state(|| None::<Sheet>);
     let error_state = use_state(|| None::<String>);
 
-    let app_context: UseReducerHandle<crate::context::AppState> = use_context::<AppContext>().expect("no ctx found");
+    let app_context: UseReducerHandle<crate::context::AppState> =
+        use_context::<AppContext>().expect("no ctx found");
 
     {
         let sheet_state = sheet_state.clone();
         let error_state = error_state.clone();
         let refresh_counter = app_context.refresh_counter;
-        
+
         use_effect_with(refresh_counter, move |_| {
             let sheet_state = sheet_state.clone();
             let error_state = error_state.clone();
-            
+
             log!("Fetching sheet data... (refresh {})", refresh_counter);
             spawn_local(async move {
                 match Request::get("http://127.0.0.1:3001/sheet").send().await {
@@ -34,7 +35,7 @@ pub fn table_component() -> Html {
                                 Ok(sheet) => {
                                     sheet_state.set(Some(sheet));
                                     error_state.set(None);
-                                },
+                                }
                                 Err(e) => {
                                     error_state.set(Some(format!("Parse error: {}", e)));
                                 }
@@ -42,7 +43,7 @@ pub fn table_component() -> Html {
                         } else {
                             error_state.set(Some(format!("Server error: {}", response.status())));
                         }
-                    },
+                    }
                     Err(e) => {
                         error_state.set(Some(format!("Request failed: {}", e)));
                     }
@@ -78,7 +79,7 @@ pub fn table_component() -> Html {
                                     html! {
                                         <tr>
                                             <td style="border: 1px solid #ccc; padding: 8px; background:rgb(7, 188, 152);">{ r + 1 }</td>
-                                            {   
+                                            {
                                                 row.iter().enumerate().map(|(c, cell)| {
                                                     let display_value = match &cell.value {
                                                         CellValue::Int(i) => i.to_string(),
@@ -92,7 +93,7 @@ pub fn table_component() -> Html {
                                                                 row_id={r.to_string()}
                                                                 column_id={c.to_string()}
                                                                 api_url={"http://127.0.0.1:3001/update-cell".to_string()}
-                                                        />  
+                                                        />
                                                     }
                                                 }).collect::<Html>()
                                             }

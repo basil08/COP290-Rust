@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sheet::function_ext::{Cell, CellValue};
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Sheet {
     pub data: Vec<Vec<Cell>>,
@@ -17,5 +16,3 @@ impl Sheet {
         &self.data
     }
 }
-
-

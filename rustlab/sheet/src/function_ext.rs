@@ -1,10 +1,10 @@
-use std::f64;
 use serde::{Deserialize, Serialize};
+use std::f64;
 /// Represents a single cell in a spreadsheet.
 ///
 /// Each cell holds a typed value (`Int`, `Float`, or `String`) and a flag indicating whether it's valid.
 /// Invalid cells are used to represent errors (e.g., formula issues, range errors).
-#[derive(Serialize, Deserialize,Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Cell {
     /// The actual value of the cell.
     pub value: CellValue,
