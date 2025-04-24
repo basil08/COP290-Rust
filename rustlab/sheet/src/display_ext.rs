@@ -1,7 +1,7 @@
-use std::cmp::min;
 use crate::function_ext::{Cell, CellValue};
-use crate::parser_ext::cell_parser;
 use crate::graph_ext::Graph;
+use crate::parser_ext::cell_parser;
+use std::cmp::min;
 
 /// Prints a 10×10 view of the spreadsheet starting from the given coordinates.
 ///
@@ -87,7 +87,7 @@ pub fn scroller(
     curry: &mut i32,
     c: i32,
     r: i32,
-    _graph: &Graph
+    _graph: &Graph,
 ) -> Result<(), &'static str> {
     let mut flag = false;
 

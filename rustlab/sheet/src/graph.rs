@@ -53,11 +53,11 @@ impl Graph {
             num_cells,
         }
     }
-/// Returns a new boxed `Cell` node for the given index.
+    /// Returns a new boxed `Cell` node for the given index.
     pub fn add_cell(cell: usize) -> Option<Box<Cell>> {
         Some(Box::new(Cell { cell, next: None }))
     }
-/// Returns a new boxed `Range` from start to end affecting the dependent cell.
+    /// Returns a new boxed `Range` from start to end affecting the dependent cell.
 
     pub fn add_range(start: usize, end: usize, dependent: usize) -> Option<Box<Range>> {
         Some(Box::new(Range {
@@ -67,7 +67,7 @@ impl Graph {
             next: None,
         }))
     }
-/// Adds a directed edge from one cell to another.
+    /// Adds a directed edge from one cell to another.
 
     pub fn add_edge(&mut self, from: usize, to: usize) {
         if self.has_edge(from, to) {
@@ -79,9 +79,9 @@ impl Graph {
         });
         self.adj_lists[from] = Some(new_cell);
     }
-/// Checks whether a directed edge already exists from one cell to another.
+    /// Checks whether a directed edge already exists from one cell to another.
 
-   pub fn has_edge(&self, from: usize, to: usize) -> bool {
+    pub fn has_edge(&self, from: usize, to: usize) -> bool {
         let mut current = &self.adj_lists[from];
         while let Some(cell) = current {
             if cell.cell == to {
@@ -91,11 +91,14 @@ impl Graph {
         }
         false
     }
-/// Deletes a dependency edge from the graph.
+    /// Deletes a dependency edge from the graph.
 
     pub fn delete_edge(&mut self, from: usize, to: usize) {
         let mut head = self.adj_lists[from].take();
-        let mut dummy = Box::new(Cell { cell: 0, next: head });
+        let mut dummy = Box::new(Cell {
+            cell: 0,
+            next: head,
+        });
         let mut prev = &mut dummy;
 
         while let Some(mut node) = prev.next.take() {
@@ -110,7 +113,7 @@ impl Graph {
 
         self.adj_lists[from] = dummy.next;
     }
-/// Inserts a new range-based dependency into the graph.
+    /// Inserts a new range-based dependency into the graph.
 
     pub fn add_range_to_graph(&mut self, start: usize, end: usize, dependent: usize) {
         let mut new_range = Self::add_range(start, end, dependent);
@@ -119,7 +122,7 @@ impl Graph {
         }
         self.ranges = new_range;
     }
-/// Removes a range from the graph if it targets the specified dependent cell.
+    /// Removes a range from the graph if it targets the specified dependent cell.
 
     pub fn delete_range(&mut self, dependent: usize) {
         let mut prev: *mut Option<Box<Range>> = &mut self.ranges;
@@ -133,16 +136,23 @@ impl Graph {
             }
         }
     }
-/// Adds a formula to the formula array for a specific cell.
+    /// Adds a formula to the formula array for a specific cell.
 
-    pub fn add_formula(graph: &mut Graph, cell: usize, c1: usize, c2: usize, op_type: i32, formula_array: &mut [Formula]) {
+    pub fn add_formula(
+        graph: &mut Graph,
+        cell: usize,
+        c1: usize,
+        c2: usize,
+        op_type: i32,
+        formula_array: &mut [Formula],
+    ) {
         formula_array[cell] = Formula {
             op_type,
             op_info1: c1 as i32,
             op_info2: c2 as i32,
         };
     }
-/// Evaluates two integers with the specified arithmetic operation.
+    /// Evaluates two integers with the specified arithmetic operation.
 
     pub fn arithmetic_eval2(v1: i32, v2: i32, op: char) -> i32 {
         match op {
@@ -153,9 +163,9 @@ impl Graph {
             _ => i32::MIN,
         }
     }
-/// Performs a depth-first topological sort starting from a cell, detecting cycles.
-///
-/// Updates `stack` with a valid evaluation order if no cycles are found.
+    /// Performs a depth-first topological sort starting from a cell, detecting cycles.
+    ///
+    /// Updates `stack` with a valid evaluation order if no cycles are found.
 
     pub fn topo_sort_from_cell(
         &self,
@@ -178,7 +188,15 @@ impl Graph {
         while let Some(node) = current {
             let dep = node.cell;
             if !visited[dep] {
-                self.topo_sort_from_cell(dep, cols, visited, on_stack, stack, formula_array, has_cycle);
+                self.topo_sort_from_cell(
+                    dep,
+                    cols,
+                    visited,
+                    on_stack,
+                    stack,
+                    formula_array,
+                    has_cycle,
+                );
             } else if on_stack[dep] {
                 *has_cycle = true;
                 return;
@@ -197,7 +215,15 @@ impl Graph {
 
             if row >= sr && row <= er && col >= sc && col <= ec {
                 if !visited[r.dependent_cell] {
-                    self.topo_sort_from_cell(r.dependent_cell, cols, visited, on_stack, stack, formula_array, has_cycle);
+                    self.topo_sort_from_cell(
+                        r.dependent_cell,
+                        cols,
+                        visited,
+                        on_stack,
+                        stack,
+                        formula_array,
+                        has_cycle,
+                    );
                 } else if on_stack[r.dependent_cell] {
                     *has_cycle = true;
                     return;
@@ -210,9 +236,9 @@ impl Graph {
         on_stack[start] = false;
         stack.push(start);
     }
-/// Evaluates and updates all dependent cells starting from `start_cell`.
-///
-/// Performs topological sort, evaluates formulas, handles errors and propagation.
+    /// Evaluates and updates all dependent cells starting from `start_cell`.
+    ///
+    /// Performs topological sort, evaluates formulas, handles errors and propagation.
 
     pub fn recalc(
         &mut self,
@@ -226,7 +252,15 @@ impl Graph {
         let mut on_stack = vec![false; self.num_cells];
         let mut stack = Vec::new();
 
-        self.topo_sort_from_cell(start_cell, cols, &mut visited, &mut on_stack, &mut stack, formula_array, has_cycle);
+        self.topo_sort_from_cell(
+            start_cell,
+            cols,
+            &mut visited,
+            &mut on_stack,
+            &mut stack,
+            formula_array,
+            has_cycle,
+        );
 
         if *has_cycle {
             return;
@@ -238,7 +272,7 @@ impl Graph {
                 0 => {
                     arr[cell] = formula.op_info1;
                 }
-            
+
                 1..=4 => {
                     let v1 = arr[formula.op_info1 as usize];
                     let v2 = formula.op_info2;
@@ -255,7 +289,7 @@ impl Graph {
                         arr[cell] = Graph::arithmetic_eval2(v1, v2, op);
                     }
                 }
-            
+
                 5..=8 => {
                     let v1 = arr[formula.op_info1 as usize];
                     let v2 = arr[formula.op_info2 as usize];
@@ -272,7 +306,7 @@ impl Graph {
                         arr[cell] = Graph::arithmetic_eval2(v1, v2, op);
                     }
                 }
-            
+
                 9..=13 => {
                     let start_cell = formula.op_info1 as usize;
                     let end_cell = formula.op_info2 as usize;
@@ -327,16 +361,21 @@ impl Graph {
                         arr[cell] = i32::MIN;
                     } else {
                         arr[cell] = match formula.op_type {
-                            9 => min_val, // MIN
-                            10 => max_val, // MAX
+                            9 => min_val,      // MIN
+                            10 => max_val,     // MAX
                             11 => sum / count, // AVG
-                            12 => sum, // SUM
-                            13 => { // STDEV
+                            12 => sum,         // SUM
+                            13 => {
+                                // STDEV
                                 let mean = sum as f64 / count as f64;
-                                let variance = values.iter().map(|&x| {
-                                    let diff = x as f64 - mean;
-                                    diff * diff
-                                }).sum::<f64>() / count as f64;
+                                let variance = values
+                                    .iter()
+                                    .map(|&x| {
+                                        let diff = x as f64 - mean;
+                                        diff * diff
+                                    })
+                                    .sum::<f64>()
+                                    / count as f64;
                                 variance.sqrt().round() as i32
                             }
                             _ => i32::MIN,
@@ -349,7 +388,7 @@ impl Graph {
                     } else {
                         arr[formula.op_info1 as usize]
                     };
-            
+
                     if v == i32::MIN {
                         arr[cell] = i32::MIN;
                     } else {
@@ -360,7 +399,7 @@ impl Graph {
                         arr[cell] = v;
                     }
                 }
-            
+
                 15 => {
                     let v1 = formula.op_info1;
                     let v2 = arr[formula.op_info2 as usize];
@@ -371,12 +410,11 @@ impl Graph {
                         arr[cell] = Graph::arithmetic_eval2(v1, v2, op);
                     }
                 }
-            
+
                 _ => {
                     arr[cell] = i32::MIN;
                 }
             }
-            
         }
     }
 }

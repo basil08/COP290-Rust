@@ -1,4 +1,4 @@
-use sheet::graph::{Graph, Formula};
+use sheet::graph::{Formula, Graph};
 use std::i32;
 
 fn setup(cells: usize) -> (Graph, Vec<i32>, Vec<Formula>, bool) {
@@ -72,7 +72,15 @@ fn test_topo_sort_with_cycle_and_ranges() {
     let mut visited = vec![false; 25];
     let mut on_stack = vec![false; 25];
     let mut stack = Vec::new();
-    graph.topo_sort_from_cell(0, 5, &mut visited, &mut on_stack, &mut stack, &formulas, &mut has_cycle); // Lines 205-206
+    graph.topo_sort_from_cell(
+        0,
+        5,
+        &mut visited,
+        &mut on_stack,
+        &mut stack,
+        &formulas,
+        &mut has_cycle,
+    ); // Lines 205-206
     assert!(has_cycle);
 }
 #[test]
@@ -182,7 +190,11 @@ fn test_recalc_constant_cell_division() {
 #[test]
 fn test_recalc_invalid_formula_type() {
     let (mut graph, mut arr, mut formulas, mut has_cycle) = setup(5);
-    formulas[0] = Formula { op_type: 99, op_info1: 0, op_info2: 0 }; // Lines 362, 364-367
+    formulas[0] = Formula {
+        op_type: 99,
+        op_info1: 0,
+        op_info2: 0,
+    }; // Lines 362, 364-367
     graph.recalc(5, &mut arr, 0, &mut formulas, &mut has_cycle);
     assert_eq!(arr[0], i32::MIN);
 }

@@ -1,52 +1,56 @@
 use axum::{
+    body::Bytes,
     extract::{Json as ExtractJson, State},
-    Json, body::Bytes,
     response::IntoResponse,
+    Json,
 };
 
-use crate::types::{AppState, UpdateCellRequest, UpdateResponse, QueryResponse};
-use crate::operations::{calculate_sum, calculate_average, clear_cells, count_cells};
+use crate::operations::{calculate_average, calculate_sum, clear_cells, count_cells};
 use crate::server_models::Sheet;
+use crate::types::{AppState, QueryResponse, UpdateCellRequest, UpdateResponse};
 
-use sheet::parser_ext::*;
 use sheet::graph_ext::State as State1;
+use sheet::parser_ext::*;
 
 use crate::create_snapshot;
 use crate::types::UndoRedoResponse;
 
-use sheet::{function_ext::{Cell, CellValue}, graph_ext::{Formula, Graph}};
-
+use sheet::{
+    function_ext::{Cell, CellValue},
+    graph_ext::{Formula, Graph},
+};
 
 pub async fn get_sheet(state: State<AppState>) -> Json<Sheet> {
     let sheet = state.read().await.sheet.clone();
     Json(sheet)
 }
 
-
 // Handle undo requests
-pub async fn undo_action(
-    State(state): State<AppState>,
-) -> Json<UndoRedoResponse> {
+pub async fn undo_action(State(state): State<AppState>) -> Json<UndoRedoResponse> {
     let mut app_state = state.write().await;
-    
+
     if let Some(prev) = app_state.undo_stack.pop() {
         // Create temporary copies for snapshot creation
         let cells_copy = app_state.cells.clone();
         let formula_array_copy = app_state.formula_array.clone();
         let graph_copy = app_state.graph.clone();
-        
+
         // Save current state to redo stack before reverting
-        app_state.redo_stack.push(create_snapshot(&cells_copy, &formula_array_copy, &graph_copy));
-        
+        app_state.redo_stack.push(create_snapshot(
+            &cells_copy,
+            &formula_array_copy,
+            &graph_copy,
+        ));
+
         // Restore previous state
         app_state.cells = prev.arr;
         app_state.formula_array = prev.formula_array;
         app_state.graph = prev.graph;
-        
+
         // Also update the regular sheet model for API compatibility
         let cells_clone = app_state.cells.clone();
         update_simple_sheet_from_cells(&mut app_state.sheet, &cells_clone, 10, 10);
-        
+
         Json(UndoRedoResponse {
             success: true,
             message: "Action undone successfully".to_string(),
@@ -60,20 +64,22 @@ pub async fn undo_action(
 }
 
 // Handle redo requests
-pub async fn redo_action(
-    State(state): State<AppState>,
-) -> Json<UndoRedoResponse> {
+pub async fn redo_action(State(state): State<AppState>) -> Json<UndoRedoResponse> {
     let mut app_state = state.write().await;
-    
+
     if let Some(next) = app_state.redo_stack.pop() {
         // Create temporary copies for snapshot creation
         let cells_copy = app_state.cells.clone();
         let formula_array_copy = app_state.formula_array.clone();
         let graph_copy = app_state.graph.clone();
-        
+
         // Save current state to undo stack before redoing
-        app_state.undo_stack.push(create_snapshot(&cells_copy, &formula_array_copy, &graph_copy));
-        
+        app_state.undo_stack.push(create_snapshot(
+            &cells_copy,
+            &formula_array_copy,
+            &graph_copy,
+        ));
+
         // Restore next state
         app_state.cells = next.arr;
         app_state.formula_array = next.formula_array;
@@ -82,7 +88,7 @@ pub async fn redo_action(
         let cells_clone = app_state.cells.clone();
         // Also update the regular sheet model for API compatibility
         update_simple_sheet_from_cells(&mut app_state.sheet, &cells_clone, 10, 10);
-        
+
         Json(UndoRedoResponse {
             success: true,
             message: "Action redone successfully".to_string(),
@@ -104,14 +110,15 @@ fn update_simple_sheet_from_cells(sheet: &mut Sheet, cells: &[Cell], rows: usize
                 // Convert Cell to string and update the sheet
                 match &cells[idx].value {
                     CellValue::Int(i) => sheet.data[r][c].value = CellValue::String(i.to_string()),
-                    CellValue::Float(f) => sheet.data[r][c].value = CellValue::String(f.to_string()),
+                    CellValue::Float(f) => {
+                        sheet.data[r][c].value = CellValue::String(f.to_string())
+                    }
                     CellValue::String(s) => sheet.data[r][c].value = CellValue::String(s.clone()),
                 }
             }
         }
     }
 }
-
 
 // Update your existing update_cell handler to use the extended functionality
 pub async fn update_cell(
@@ -147,21 +154,23 @@ pub async fn update_cell(
     // let graph_clone = app_state.graph.clone();
     // // Save current state for undo before modifying
     // app_state.undo_stack.push(create_snapshot(&cells_clone, &formula_array_clone, &graph_clone));
-    
+
     // // Limit undo stack size to 5 entries
     // if app_state.undo_stack.len() > 5 {
     //     app_state.undo_stack.remove(0);
     // }
-    
+
     // // Clear redo stack when making a new change
     // app_state.redo_stack.clear();
-    
+
     // Calculate 1D index from row and column
     let cell_index = row_index * cols + col_index;
-    
+
     // Check if the indices are valid
-    if row_index >= app_state.sheet.data.len() || col_index >= app_state.sheet.data[0].len() ||
-       cell_index >= app_state.cells.len() {
+    if row_index >= app_state.sheet.data.len()
+        || col_index >= app_state.sheet.data[0].len()
+        || cell_index >= app_state.cells.len()
+    {
         return Json(UpdateResponse {
             success: false,
             message: "Cell indices out of bounds".to_string(),
@@ -173,7 +182,6 @@ pub async fn update_cell(
         // It's an integer
         app_state.cells[cell_index] = Cell::new_int(int_val);
         app_state.sheet.data[row_index][col_index].value = CellValue::Int(int_val);
-
     } else if let Ok(float_val) = payload.value.parse::<f64>() {
         // It's a float
         app_state.cells[cell_index] = Cell::new_float(float_val);
@@ -184,7 +192,15 @@ pub async fn update_cell(
         let mut formula_array_clone = app_state.formula_array.clone();
         let mut graph_clone = app_state.graph.clone();
         let mut state_clone = app_state.state.clone();
-        match cell_parser(&payload.value, cols as i32, app_state.sheet.data.len() as i32, &mut cells_clone, &mut graph_clone, &mut formula_array_clone, &mut state_clone) {
+        match cell_parser(
+            &payload.value,
+            cols as i32,
+            app_state.sheet.data.len() as i32,
+            &mut cells_clone,
+            &mut graph_clone,
+            &mut formula_array_clone,
+            &mut state_clone,
+        ) {
             Ok(_) => {
                 // Formula processed successfully
                 // Update the actual state with the modified clones
@@ -195,11 +211,18 @@ pub async fn update_cell(
 
                 // Also update the display sheet
                 match &app_state.cells[cell_index].value {
-                    CellValue::Int(i) => app_state.sheet.data[row_index][col_index].value = CellValue::Int(*i),
-                    CellValue::Float(f) => app_state.sheet.data[row_index][col_index].value = CellValue::Float(*f),
-                    CellValue::String(s) => app_state.sheet.data[row_index][col_index].value = CellValue::String(s.clone()),
+                    CellValue::Int(i) => {
+                        app_state.sheet.data[row_index][col_index].value = CellValue::Int(*i)
+                    }
+                    CellValue::Float(f) => {
+                        app_state.sheet.data[row_index][col_index].value = CellValue::Float(*f)
+                    }
+                    CellValue::String(s) => {
+                        app_state.sheet.data[row_index][col_index].value =
+                            CellValue::String(s.clone())
+                    }
                 }
-            },
+            }
             Err(e) => {
                 return Json(UpdateResponse {
                     success: false,
@@ -212,7 +235,7 @@ pub async fn update_cell(
         app_state.cells[cell_index] = Cell::new_string(payload.value.clone());
         app_state.sheet.data[row_index][col_index].value = CellValue::String(payload.value.clone());
     }
-    
+
     // Update the regular sheet data for API compatibility
     // app_state.sheet.data[row_index][col_index].value = string_to_cell(&payload.value);
 
@@ -223,7 +246,6 @@ pub async fn update_cell(
     })
 }
 
-
 pub fn cell_parser(
     a: &str,
     c: i32,
@@ -232,7 +254,8 @@ pub fn cell_parser(
     graph: &mut Graph,
     formula_array: &mut [Formula],
     state: &mut State1,
-) -> Result<(), &'static str> {    // Placeholder for the actual cell parser function
+) -> Result<(), &'static str> {
+    // Placeholder for the actual cell parser function
     let pos_equalto = a.find('=').ok_or("No equals sign found")?;
     let pos_end = a.len();
 
@@ -265,33 +288,113 @@ pub fn cell_parser(
 
     if value {
         print!(" [DEBUG] Value function: ");
-        value_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?;
+        value_func(
+            a,
+            c,
+            r,
+            pos_equalto,
+            pos_end,
+            arr,
+            graph,
+            formula_array,
+            state,
+        )?;
     } else if arth_exp {
-        arth_op(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?;
+        arth_op(
+            a,
+            c,
+            r,
+            pos_equalto,
+            pos_end,
+            arr,
+            graph,
+            formula_array,
+            state,
+        )?;
     } else if func {
         let func_name = &a[pos_equalto + 1..a[pos_equalto..].find('(').unwrap() + pos_equalto];
         // println!("[DEBUG] Function name: {}", func_name);
         match func_name {
-            "MIN" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 9)?,
-            "MAX" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 10)?,
-            "AVG" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 11)?,
-            "SUM" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 12)?,
-            "STDEV" => range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 13)?,
-            "SLEEP" => sleep_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?,
-            
+            "MIN" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                9,
+            )?,
+            "MAX" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                10,
+            )?,
+            "AVG" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                11,
+            )?,
+            "SUM" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                12,
+            )?,
+            "STDEV" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                13,
+            )?,
+            "SLEEP" => sleep_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+            )?,
 
-    
             _ => return Err("Unknown function"),
         }
     }
 
     Ok(())
-
 }
 
-
-
-pub fn string_to_cell( value: &str) -> CellValue {
+pub fn string_to_cell(value: &str) -> CellValue {
     if let Ok(int_value) = value.parse::<i32>() {
         CellValue::Int(int_value)
     } else if let Ok(float_value) = value.parse::<f64>() {
@@ -303,10 +406,7 @@ pub fn string_to_cell( value: &str) -> CellValue {
 
 // Function to process string commands
 // Modify your process_query function to use the extended functionality
-pub async fn process_query(
-    State(state): State<AppState>,
-    body: Bytes,
-) -> impl IntoResponse {
+pub async fn process_query(State(state): State<AppState>, body: Bytes) -> impl IntoResponse {
     // Convert bytes to string
     let query_string = match String::from_utf8(body.to_vec()) {
         Ok(s) => s,
@@ -318,48 +418,59 @@ pub async fn process_query(
             })
         }
     };
-    
+
     let mut app_state = state.write().await;
     let cols = app_state.sheet.data[0].len();
     let rows = app_state.sheet.data.len();
-    
+
     // Save current state for undo before modifying (for commands that modify state)
     let query = query_string.trim();
-
 
     let mut cells_clone = app_state.cells.clone();
     let mut formula_array_clone = app_state.formula_array.clone();
     let mut graph_clone = app_state.graph.clone();
     let mut state_clone = app_state.state.clone();
     // Process the query - for direct formula/command input
-    let _ = match parser(query, cols as i32, rows as i32, &mut cells_clone, &mut graph_clone, &mut formula_array_clone, &mut state_clone) {
+    let _ = match parser(
+        query,
+        cols as i32,
+        rows as i32,
+        &mut cells_clone,
+        &mut graph_clone,
+        &mut formula_array_clone,
+        &mut state_clone,
+    ) {
         Ok(_) => {
-                // Formula processed successfully
-                // Update the actual state with the modified clones
-                app_state.cells = cells_clone;
-                app_state.formula_array = formula_array_clone;
-                app_state.graph = graph_clone;
-                app_state.state = state_clone;
+            // Formula processed successfully
+            // Update the actual state with the modified clones
+            app_state.cells = cells_clone;
+            app_state.formula_array = formula_array_clone;
+            app_state.graph = graph_clone;
+            app_state.state = state_clone;
 
-                // Also update the display sheet
-                for r in 0..rows {
-                    for c in 0..cols {
-                        let idx = r * cols + c;
-                        match &app_state.cells[idx].value {
-                            CellValue::Int(i) => app_state.sheet.data[r][c].value = CellValue::Int(*i),
-                            CellValue::Float(f) => app_state.sheet.data[r][c].value = CellValue::Float(*f),
-                            CellValue::String(s) => app_state.sheet.data[r][c].value = CellValue::String(s.clone()),
+            // Also update the display sheet
+            for r in 0..rows {
+                for c in 0..cols {
+                    let idx = r * cols + c;
+                    match &app_state.cells[idx].value {
+                        CellValue::Int(i) => app_state.sheet.data[r][c].value = CellValue::Int(*i),
+                        CellValue::Float(f) => {
+                            app_state.sheet.data[r][c].value = CellValue::Float(*f)
+                        }
+                        CellValue::String(s) => {
+                            app_state.sheet.data[r][c].value = CellValue::String(s.clone())
                         }
                     }
                 }
+            }
 
             // Formula processed successfully - continue with the existing code
             return Json(QueryResponse {
                 success: true,
                 message: "Formula executed successfully".to_string(),
                 result: None,
-            })
-        },
+            });
+        }
         Err(e) => {
             return Json(QueryResponse {
                 success: false,

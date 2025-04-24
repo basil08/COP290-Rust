@@ -1,6 +1,6 @@
-use sheet::graph_ext::{Graph, Formula, State};
-use sheet::function_ext::{Cell, CellValue};
 use sheet::display_ext::{printer, scroller};
+use sheet::function_ext::{Cell, CellValue};
+use sheet::graph_ext::{Formula, Graph, State};
 
 #[test]
 fn test_add_and_delete_edge() {
@@ -8,7 +8,11 @@ fn test_add_and_delete_edge() {
     graph.add_edge(2, 0);
     graph.add_edge(3, 0);
     let mut formulas = vec![Formula::default(); 5];
-    formulas[2] = Formula { op_type: 1, op_info1: 0, op_info2: 0 };
+    formulas[2] = Formula {
+        op_type: 1,
+        op_info1: 0,
+        op_info2: 0,
+    };
     graph.delete_edge(2, 5, &formulas);
     assert_eq!(graph.adj_lists_head[0].as_ref().unwrap().cell, 3);
 }
@@ -163,4 +167,3 @@ fn test_scroll_left_edge_cases() {
 //     assert!(scroller("scroll_right", &arr, &mut currx, &mut curry, c, r, &graph).is_ok());
 //     assert_eq!(currx, 18); // Should cap at 18
 // }
-

@@ -1,5 +1,5 @@
-use yew::prelude::*;
 use std::rc::Rc;
+use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
 pub struct AppState {
@@ -8,9 +8,7 @@ pub struct AppState {
 
 impl Default for AppState {
     fn default() -> Self {
-        Self {
-            refresh_counter: 0,
-        }
+        Self { refresh_counter: 0 }
     }
 }
 
@@ -26,11 +24,10 @@ impl Reducible for AppState {
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         match action {
-            AppAction::Refresh => {
-                AppState {
-                    refresh_counter: self.refresh_counter + 1,
-                }.into()
+            AppAction::Refresh => AppState {
+                refresh_counter: self.refresh_counter + 1,
             }
+            .into(),
         }
     }
 }
