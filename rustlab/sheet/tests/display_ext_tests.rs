@@ -214,7 +214,6 @@ fn test_scroll_negative_currx() {
     assert_eq!(currx, -1); // wrapped around to 0
 }
 
-
 // #[test]
 // fn test_scroll_right_with_column_limit() {
 //     let mut currx = 0;

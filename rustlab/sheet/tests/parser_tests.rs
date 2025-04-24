@@ -82,8 +82,6 @@ fn test_parser_arithmetic_cell_cell_expr_subtraction() {
     assert_eq!(arr[0], 3);
 }
 
-
-
 #[test]
 fn test_parser_arithmetic_cell_cell_expr_division() {
     let (mut graph, mut arr, mut formulas) = setup(5);
@@ -359,7 +357,8 @@ fn test_parser_valid_stdev_range() {
     let (mut graph, mut arr, mut formulas) = setup(5);
     arr[1] = 10;
     arr[2] = 20;
-    let status = sheet::parser::parser("A1=STDEV(B1:C1)", 5, 1, &mut arr, &mut graph, &mut formulas);
+    let status =
+        sheet::parser::parser("A1=STDEV(B1:C1)", 5, 1, &mut arr, &mut graph, &mut formulas);
     assert_eq!(status, 1);
 }
 
