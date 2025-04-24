@@ -7,11 +7,11 @@ use crate::function_ext::Cell;
 use crate::util_ext::{arithmetic_eval, return_optype};
 use crate::function_ext::CellValue;
 
-fn is_alpha(c: char) -> bool {
+pub fn is_alpha(c: char) -> bool {
     c.is_ascii_uppercase() && ('A'..='Z').contains(&c)
 }
 
-fn is_digit(c: char) -> bool {
+pub fn is_digit(c: char) -> bool {
     c.is_ascii_digit()
 }
 
@@ -151,8 +151,7 @@ pub fn autofill(
     Ok(())
 }
 
-fn value_func(
-    
+pub fn value_func(
     a: &str,
     c: i32,
     r: i32,
@@ -163,7 +162,6 @@ fn value_func(
     formula_array: &mut [Formula],
     state: &mut State,
 ) -> Result<(), &'static str> {
-    // println!("[DEBUG] Parsing value function: {}", &a[pos_equalto + 1..pos_end]);
     // println!("value function");
     let first_cell = cell_parser(a, c, r, 0, pos_equalto - 1)?;
     state.old_value = arr[first_cell as usize].clone();
@@ -278,7 +276,7 @@ fn value_func(
     Ok(())
 }
 
-fn arth_op(
+pub fn arth_op(
     a: &str,
     c: i32,
     r: i32,
@@ -404,7 +402,7 @@ fn arth_op(
     Ok(())
 }
 
-fn range_func(
+pub fn range_func(
     a: &str,
     c: i32,
     r: i32,
@@ -452,7 +450,7 @@ fn range_func(
     Ok(())
 }
 
-fn sleep_func(
+pub fn sleep_func(
     a: &str,
     c: i32,
     r: i32,
@@ -530,22 +528,6 @@ pub fn parser(
         return autofill(col, length, c, r, arr);
 
     }
-//     let b = a.trim(); // strip leading/trailing whitespace
-// let b = a.to_lowercase(); // ensure consistent casing
-
-    // if b.starts_with("autofill") {
-
-    //     let parts: Vec<&str> = a.split_whitespace().collect();
-    //     if parts.len() != 3 {
-    //         return Err("Usage: autofill <column> <length>");
-    //     }
-    //     let col = parts[1];
-    //     println!("col: {}", col);
-    //     let length = parts[2].parse::<usize>().map_err(|_| "Invalid length")?;
-    //     println!("here");
-    //     return autofill(col, length, c, r, arr);
-    // }
-    
     let pos_equalto = a.find('=').ok_or("No equals sign found")?;
     let pos_end = a.len();
 

@@ -17,5 +17,3 @@ impl Sheet {
         &self.data
     }
 }
-
-
