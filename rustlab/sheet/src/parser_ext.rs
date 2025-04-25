@@ -6,14 +6,17 @@ use crate::graph_ext::State;
 use crate::function_ext::CellValue;
 use crate::util_ext::{arithmetic_eval, return_optype};
 
+/// Checks if a character is an uppercase alphabet (A–Z)
 pub fn is_alpha(c: char) -> bool {
-    c.is_ascii_uppercase() && ('A'..='Z').contains(&c)
+    c.is_ascii_uppercase() && c.is_ascii_uppercase()
 }
-
+/// Checks if a character is a digit (0–9)
 pub fn is_digit(c: char) -> bool {
     c.is_ascii_digit()
 }
 
+/// Parses a cell label (like "B2") into its flattened 1D array index
+/// Example: B2 in a 5-column grid → index = 1 + 1*5 = 6
 pub fn cell_parser(a: &str, c: i32, r: i32, start: usize, end: usize) -> Result<i32, &'static str> {
     let mut cell_col = 0;
     let mut cell_row = 0;
@@ -112,7 +115,8 @@ pub fn generate_sequence(base: &[i32], pattern: &str, total_len: usize) -> Vec<i
     out
 }
 
-/// Autofill one column down to `length` rows.
+/// Fills a spreadsheet column with a recognized pattern (AP, GP, FIB, CONST).
+/// Requires the first 4 cells of the column to be valid integers.
 pub fn autofill(
     col_char: &str,
     length: usize,
@@ -150,10 +154,26 @@ pub fn autofill(
         let idx = row * cols as usize + col_idx;
         arr[idx] = Cell::new_int(val);
     }
-    println!("[autofill] autofilled column {} to length {}", col_char, length);
+    println!(
+        "[autofill] autofilled column {} to length {}",
+        col_char, length
+    );
     Ok(())
 }
-
+/// Parses and sets a value (int, float, string, or cell reference) into a target cell.
+/// It updates the formula graph accordingly and detects cycles.
+///
+/// # Arguments
+/// - `a`: Input string representing the formula.
+/// - `c`: Number of columns in the spreadsheet.
+/// - `r`: Number of rows in the spreadsheet.
+/// - `pos_equalto`: Position of '=' character in the input.
+/// - `pos_end`: End position of the formula string.
+/// - `arr`: Spreadsheet cell array.
+/// - `graph`: Dependency graph for recalculation.
+/// - `formula_array`: Formula metadata for each cell.
+/// - `state`: State to store previous values for rollback in case of cycles.
+#[allow(clippy::too_many_arguments)]
 pub fn value_func(
     a: &str,
     c: i32,
@@ -176,7 +196,7 @@ pub fn value_func(
         graph.delete_edge(first_cell, c, formula_array);
     }
 
-    let mut second_cell = -1;
+    let mut second_cell;
     let mut is_cell = false;
     let mut is_negative = false;
 
@@ -197,9 +217,13 @@ pub fn value_func(
 
         return Ok(());
     } else if a[pos..pos_end].chars().all(is_digit) {
-        second_cell = a[pos..pos_end].parse::<i32>().map_err(|_| "Invalid integer")?;
+        second_cell = a[pos..pos_end]
+            .parse::<i32>()
+            .map_err(|_| "Invalid integer")?;
     } else if a[pos..pos_end].chars().any(|ch| ch == '.') {
-        let float_value = a[pos..pos_end].parse::<f64>().map_err(|_| "Invalid float")?;
+        let float_value = a[pos..pos_end]
+            .parse::<f64>()
+            .map_err(|_| "Invalid float")?;
         arr[first_cell as usize] = Cell::new_float(float_value);
         // println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
         // println!("[DEBUG] Float value: {}", float_value);
@@ -273,7 +297,15 @@ pub fn value_func(
 
     Ok(())
 }
-
+/// Handles arithmetic operations of the form A1=B1+C1 or A1=5+B1 etc.
+/// Identifies operand types (cell or literal), builds graph edges, and computes result.
+///
+/// # Arguments
+/// Same as `value_func`.
+///
+/// # Errors
+/// Returns error if parsing fails or a circular dependency is introduced.
+#[allow(clippy::too_many_arguments)]
 pub fn arth_op(
     a: &str,
     c: i32,
@@ -313,8 +345,8 @@ pub fn arth_op(
         graph.delete_edge(first_cell, c, formula_array);
     }
 
-    let mut second_cell = 0;
-    let mut third_cell = 0;
+    let second_cell;
+    let third_cell;
     let mut is1cell = false;
     let mut is2cell = false;
     let mut sign1 = 1;
@@ -333,7 +365,10 @@ pub fn arth_op(
         second_cell = cell_parser(a, c, r, start, opindex - 1)?;
         is1cell = true;
     } else {
-        second_cell = first_part.parse::<i32>().map_err(|_| "Invalid first operand")? * sign1;
+        second_cell = first_part
+            .parse::<i32>()
+            .map_err(|_| "Invalid first operand")?
+            * sign1;
     }
 
     let mut second_start = opindex + 1;
@@ -349,7 +384,10 @@ pub fn arth_op(
         third_cell = cell_parser(a, c, r, second_start, pos_end - 1)?;
         is2cell = true;
     } else {
-        third_cell = second_part.parse::<i32>().map_err(|_| "Invalid second operand")? * sign2;
+        third_cell = second_part
+            .parse::<i32>()
+            .map_err(|_| "Invalid second operand")?
+            * sign2;
     }
 
     match (is1cell, is2cell) {
@@ -411,13 +449,21 @@ pub fn arth_op(
 
     Ok(())
 }
-
+/// Handles range-based functions like SUM(A1:B2), AVG, MIN, etc.
+/// Parses start and end of range, inserts the formula, and calculates the result.
+///
+/// # Arguments
+/// - `op_type`: An integer representing the function type (9 = MIN, 10 = MAX, ..., 13 = STDEV).
+///
+/// # Errors
+/// Returns error if parsing fails or a cycle is detected.
+#[allow(clippy::too_many_arguments)]
 pub fn range_func(
     a: &str,
     c: i32,
     r: i32,
     pos_equalto: usize,
-    pos_end: usize,
+    _pos_end: usize,
     arr: &mut [Cell],
     graph: &mut Graph,
     formula_array: &mut [Formula],
@@ -435,12 +481,18 @@ pub fn range_func(
     }
 
     let eq_str = &a[pos_equalto..];
-    let open_paren =
-        eq_str.find('(').map(|i| i + pos_equalto).ok_or("Missing opening parenthesis")?;
-    let close_paren =
-        eq_str.find(')').map(|i| i + pos_equalto).ok_or("Missing closing parenthesis")?;
-    let colon_pos =
-        a[open_paren + 1..].find(':').map(|i| i + open_paren + 1).ok_or("Missing colon")?;
+    let open_paren = eq_str
+        .find('(')
+        .map(|i| i + pos_equalto)
+        .ok_or("Missing opening parenthesis")?;
+    let close_paren = eq_str
+        .find(')')
+        .map(|i| i + pos_equalto)
+        .ok_or("Missing closing parenthesis")?;
+    let colon_pos = a[open_paren + 1..]
+        .find(':')
+        .map(|i| i + open_paren + 1)
+        .ok_or("Missing colon")?;
 
     let range_start = cell_parser(a, c, r, open_paren + 1, colon_pos - 1)?;
     let range_end = cell_parser(a, c, r, colon_pos + 1, close_paren - 1)?;
@@ -462,13 +514,19 @@ pub fn range_func(
     }
     Ok(())
 }
-
+/// Handles the SLEEP(n) function which pauses execution for `n` seconds.
+/// `n` can either be a literal or a reference to another cell.
+/// Updates the formula graph and triggers recalculation.
+///
+/// # Errors
+/// Returns error if the value is invalid or a cycle is introduced.
+#[allow(clippy::too_many_arguments)]
 pub fn sleep_func(
     a: &str,
     c: i32,
     r: i32,
     pos_equalto: usize,
-    pos_end: usize,
+    _pos_end: usize,
     arr: &mut [Cell],
     graph: &mut Graph,
     formula_array: &mut [Formula],
@@ -485,10 +543,14 @@ pub fn sleep_func(
     }
 
     let eq_str = &a[pos_equalto..];
-    let open_paren =
-        eq_str.find('(').map(|i| i + pos_equalto).ok_or("Missing opening parenthesis")?;
-    let close_paren =
-        eq_str.find(')').map(|i| i + pos_equalto).ok_or("Missing closing parenthesis")?;
+    let open_paren = eq_str
+        .find('(')
+        .map(|i| i + pos_equalto)
+        .ok_or("Missing opening parenthesis")?;
+    let close_paren = eq_str
+        .find(')')
+        .map(|i| i + pos_equalto)
+        .ok_or("Missing closing parenthesis")?;
 
     let ref_cell = cell_parser(a, c, r, open_paren + 1, close_paren - 1);
     if let Ok(ref_cell) = ref_cell {
@@ -496,7 +558,9 @@ pub fn sleep_func(
         graph.add_edge(target_cell, ref_cell as usize);
     } else {
         let sleep_str = &a[open_paren + 1..close_paren];
-        let sleep_value = sleep_str.parse::<i32>().map_err(|_| "Invalid sleep value")?;
+        let sleep_value = sleep_str
+            .parse::<i32>()
+            .map_err(|_| "Invalid sleep value")?;
         graph.add_formula(target_cell, target_cell, sleep_value, 14, formula_array);
     }
 
@@ -515,7 +579,21 @@ pub fn sleep_func(
     }
     Ok(())
 }
-
+/// Master parser function that identifies the type of formula (value, arithmetic, function, autofill)
+/// and delegates to the appropriate handler.
+/// Handles cycle detection rollback, function dispatching, and runtime formula parsing.
+///
+/// # Arguments
+/// - `a`: Formula string to parse and execute.
+/// - `c`, `r`: Number of columns and rows.
+/// - `arr`: The spreadsheet’s cell array.
+/// - `graph`: The dependency graph used for topological sorting and cycle detection.
+/// - `formula_array`: Formula metadata array.
+/// - `state`: Context that keeps track of old values for undo during cycle resolution.
+///
+/// # Errors
+/// - Returns a string-based error if parsing or execution fails.
+/// - Detects mixed formulas (e.g., MIN(1:2) + 5) as invalid.
 pub fn parser(
     a: &str,
     c: i32,
@@ -530,7 +608,7 @@ pub fn parser(
         return Ok(());
     }
     println!("a: {}", a);
-    if (a.starts_with("=autofill")) {
+    if a.starts_with("=autofill") {
         println!("hi");
         let parts: Vec<&str> = a.split_whitespace().collect();
         if parts.len() != 3 {
@@ -573,29 +651,104 @@ pub fn parser(
     }
 
     if value {
-        value_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?;
+        value_func(
+            a,
+            c,
+            r,
+            pos_equalto,
+            pos_end,
+            arr,
+            graph,
+            formula_array,
+            state,
+        )?;
     } else if arth_exp {
-        arth_op(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?;
+        arth_op(
+            a,
+            c,
+            r,
+            pos_equalto,
+            pos_end,
+            arr,
+            graph,
+            formula_array,
+            state,
+        )?;
     } else if func {
         let func_name = &a[pos_equalto + 1..a[pos_equalto..].find('(').unwrap() + pos_equalto];
         println!("[DEBUG] Function name: {}", func_name);
         match func_name {
-            "MIN" => {
-                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 9)?
-            }
-            "MAX" => {
-                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 10)?
-            }
-            "AVG" => {
-                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 11)?
-            }
-            "SUM" => {
-                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 12)?
-            }
-            "STDEV" => {
-                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 13)?
-            }
-            "SLEEP" => sleep_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?,
+            "MIN" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                9,
+            )?,
+            "MAX" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                10,
+            )?,
+            "AVG" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                11,
+            )?,
+            "SUM" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                12,
+            )?,
+            "STDEV" => range_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+                13,
+            )?,
+            "SLEEP" => sleep_func(
+                a,
+                c,
+                r,
+                pos_equalto,
+                pos_end,
+                arr,
+                graph,
+                formula_array,
+                state,
+            )?,
 
             _ => return Err("Unknown function"),
         }

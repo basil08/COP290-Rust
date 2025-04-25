@@ -27,11 +27,10 @@
 use crate::graph::{Formula, Graph};
 use crate::parser::cell_parser;
 use std::cmp::{max, min};
-use std::i32;
-use std::thread::sleep;
-use std::time::Duration;
+// use std::i32;
+// use std::thread::sleep;
+// use std::time::Duration;
 /// Global flag to indicate if a function encountered an invalid range.
-
 pub static mut INVALID_RANGE: bool = false;
 
 fn error_usize() -> usize {
@@ -55,14 +54,12 @@ fn error_return() -> i32 {
     -1
 }
 /// Validates that `start` to `end` defines a proper left-to-right, top-to-bottom rectangular range.
-
 fn validate_range(start: usize, end: usize, cols: usize) -> bool {
     let (sr, sc) = (start / cols, start % cols);
     let (er, ec) = (end / cols, end % cols);
     sr < er || (sr == er && sc <= ec)
 }
 /// Calculates the standard deviation (rounded) from a slice of integers.
-
 fn std(values: &[i32]) -> i32 {
     if values.len() <= 1 {
         return 0;
@@ -79,7 +76,6 @@ fn std(values: &[i32]) -> i32 {
     variance.sqrt().round() as i32
 }
 /// Parses a range of cells from a string (e.g., "SUM(B1:C3)") and returns the start and end indices.
-
 fn extract_range_cells(
     a: &str,
     eq_idx: usize,
@@ -104,7 +100,7 @@ fn extract_range_cells(
 /// Computes the minimum value within a specified range and stores it in the target cell.
 /// Adds the formula and dependency to the graph for recalculation tracking.
 /// Returns 1 on success.
-
+#[allow(clippy::too_many_arguments)]
 pub fn min_func(
     a: &str,
     c: usize,
@@ -155,7 +151,7 @@ pub fn min_func(
 /// Computes the maximum value within a specified range and stores it in the target cell.
 /// Adds the formula and dependency to the graph for recalculation tracking.
 /// Returns 1 on success.
-
+#[allow(clippy::too_many_arguments)]
 pub fn max_func(
     a: &str,
     c: usize,
@@ -202,7 +198,7 @@ pub fn max_func(
 /// Computes the total sum of values within a specified range and stores it in the target cell.
 /// Adds the formula and dependency to the graph for recalculation tracking.
 /// Returns 1 on success.
-
+#[allow(clippy::too_many_arguments)]
 pub fn sum_func(
     a: &str,
     c: usize,
@@ -225,7 +221,7 @@ pub fn sum_func(
 /// Computes the average value within a specified range and stores it in the target cell.
 /// Adds the formula and dependency to the graph for recalculation tracking.
 /// Returns 1 on success.
-
+#[allow(clippy::too_many_arguments)]
 pub fn avg_func(
     a: &str,
     c: usize,
@@ -263,7 +259,7 @@ pub fn avg_func(
 /// Computes the standard deviation of values within a specified range and stores it in the target cell.
 /// Adds the formula and dependency to the graph for recalculation tracking.
 /// Returns 1 on success.
-
+#[allow(clippy::too_many_arguments)]
 pub fn stdev_func(
     a: &str,
     c: usize,
@@ -298,7 +294,7 @@ pub fn stdev_func(
 /// Delays execution for a number of seconds specified either directly or from a referenced cell.
 /// Also stores the sleep duration in the target cell and logs the dependency.
 /// Returns 1 on success.
-
+#[allow(clippy::too_many_arguments)]
 pub fn sleep_func(
     a: &str,
     c: usize,
@@ -311,7 +307,10 @@ pub fn sleep_func(
 ) -> i32 {
     let target_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
     let open_paren = a[eq_idx..].find('(').map(|i| i + eq_idx).unwrap_or(0);
-    let close_paren = a[eq_idx..].find(')').map(|i| i + eq_idx).unwrap_or(a.len() - 1);
+    let close_paren = a[eq_idx..]
+        .find(')')
+        .map(|i| i + eq_idx)
+        .unwrap_or(a.len() - 1);
     if close_paren <= open_paren + 1 {
         // println!("Invalid sleep function syntax");
         return error_return();
@@ -325,7 +324,14 @@ pub fn sleep_func(
             return 1;
         }
         graph.add_edge(ref_cell, target_cell);
-        Graph::add_formula(graph, target_cell, ref_cell, sleep_value as usize, 14, formula_array);
+        Graph::add_formula(
+            graph,
+            target_cell,
+            ref_cell,
+            sleep_value as usize,
+            14,
+            formula_array,
+        );
         if sleep_value > 0 {
             // println!("Sleeping for {} seconds 1", sleep_value);
             // sleep(Duration::from_secs(sleep_value as u64));
@@ -336,7 +342,14 @@ pub fn sleep_func(
     } else {
         // println!("2");
         let value: i32 = a[open_paren + 1..close_paren].trim().parse().unwrap_or(-1);
-        Graph::add_formula(graph, target_cell, target_cell, value as usize, 14, formula_array);
+        Graph::add_formula(
+            graph,
+            target_cell,
+            target_cell,
+            value as usize,
+            14,
+            formula_array,
+        );
         arr[target_cell] = value;
         if value > 0 {
             // println!("Sleeping for {} seconds 2", value);

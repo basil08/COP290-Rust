@@ -1,5 +1,5 @@
-use std::collections::VecDeque;
-use std::i32;
+// use std::collections::VecDeque;
+// use std::i32;
 /// Represents a formula associated with a spreadsheet cell.
 ///
 /// - `op_type`: Indicates the operation type (e.g. 0: assign, 1-4: unary op, 5-8: binary op, 9-13: range functions).
@@ -47,14 +47,17 @@ pub struct Graph {
 impl Graph {
     /// Creates a new `Graph` with the given number of cells.
     pub fn new(num_cells: usize) -> Self {
-        Self { adj_lists: vec![None; num_cells], ranges: None, num_cells }
+        Self {
+            adj_lists: vec![None; num_cells],
+            ranges: None,
+            num_cells,
+        }
     }
     /// Returns a new boxed `Cell` node for the given index.
     pub fn add_cell(cell: usize) -> Option<Box<Cell>> {
         Some(Box::new(Cell { cell, next: None }))
     }
     /// Returns a new boxed `Range` from start to end affecting the dependent cell.
-
     pub fn add_range(start: usize, end: usize, dependent: usize) -> Option<Box<Range>> {
         Some(Box::new(Range {
             start_cell: start,
@@ -64,16 +67,17 @@ impl Graph {
         }))
     }
     /// Adds a directed edge from one cell to another.
-
     pub fn add_edge(&mut self, from: usize, to: usize) {
         if self.has_edge(from, to) {
             return;
         }
-        let new_cell = Box::new(Cell { cell: to, next: self.adj_lists[from].take() });
+        let new_cell = Box::new(Cell {
+            cell: to,
+            next: self.adj_lists[from].take(),
+        });
         self.adj_lists[from] = Some(new_cell);
     }
     /// Checks whether a directed edge already exists from one cell to another.
-
     pub fn has_edge(&self, from: usize, to: usize) -> bool {
         let mut current = &self.adj_lists[from];
         while let Some(cell) = current {
@@ -85,10 +89,12 @@ impl Graph {
         false
     }
     /// Deletes a dependency edge from the graph.
-
     pub fn delete_edge(&mut self, from: usize, to: usize) {
-        let mut head = self.adj_lists[from].take();
-        let mut dummy = Box::new(Cell { cell: 0, next: head });
+        let head = self.adj_lists[from].take();
+        let mut dummy = Box::new(Cell {
+            cell: 0,
+            next: head,
+        });
         let mut prev = &mut dummy;
 
         while let Some(mut node) = prev.next.take() {
@@ -104,7 +110,6 @@ impl Graph {
         self.adj_lists[from] = dummy.next;
     }
     /// Inserts a new range-based dependency into the graph.
-
     pub fn add_range_to_graph(&mut self, start: usize, end: usize, dependent: usize) {
         let mut new_range = Self::add_range(start, end, dependent);
         if let Some(ref mut r) = new_range {
@@ -113,7 +118,6 @@ impl Graph {
         self.ranges = new_range;
     }
     /// Removes a range from the graph if it targets the specified dependent cell.
-
     pub fn delete_range(&mut self, dependent: usize) {
         let mut prev: *mut Option<Box<Range>> = &mut self.ranges;
         unsafe {
@@ -127,19 +131,21 @@ impl Graph {
         }
     }
     /// Adds a formula to the formula array for a specific cell.
-
     pub fn add_formula(
-        graph: &mut Graph,
+        _graph: &mut Graph,
         cell: usize,
         c1: usize,
         c2: usize,
         op_type: i32,
         formula_array: &mut [Formula],
     ) {
-        formula_array[cell] = Formula { op_type, op_info1: c1 as i32, op_info2: c2 as i32 };
+        formula_array[cell] = Formula {
+            op_type,
+            op_info1: c1 as i32,
+            op_info2: c2 as i32,
+        };
     }
     /// Evaluates two integers with the specified arithmetic operation.
-
     pub fn arithmetic_eval2(v1: i32, v2: i32, op: char) -> i32 {
         match op {
             '+' => v1 + v2,
@@ -152,7 +158,8 @@ impl Graph {
     /// Performs a depth-first topological sort starting from a cell, detecting cycles.
     ///
     /// Updates `stack` with a valid evaluation order if no cycles are found.
-
+    #[allow(clippy::only_used_in_recursion)]
+    #[allow(clippy::too_many_arguments)]
     pub fn topo_sort_from_cell(
         &self,
         start: usize,
@@ -185,6 +192,8 @@ impl Graph {
                 );
             } else if on_stack[dep] {
                 *has_cycle = true;
+                // HAS_CYCLE.store(true, Ordering::Relaxed);  // or Ordering::SeqCst if needed
+
                 return;
             }
             current = &node.next;
@@ -212,6 +221,8 @@ impl Graph {
                     );
                 } else if on_stack[r.dependent_cell] {
                     *has_cycle = true;
+                    // HAS_CYCLE.store(true, Ordering::Relaxed);  // or Ordering::SeqCst if needed
+
                     return;
                 }
             }
@@ -225,7 +236,6 @@ impl Graph {
     /// Evaluates and updates all dependent cells starting from `start_cell`.
     ///
     /// Performs topological sort, evaluates formulas, handles errors and propagation.
-
     pub fn recalc(
         &mut self,
         cols: usize,
@@ -407,7 +417,10 @@ impl Graph {
 /// Clones a dependency list node recursively.
 impl Clone for Cell {
     fn clone(&self) -> Self {
-        Self { cell: self.cell, next: self.next.clone() }
+        Self {
+            cell: self.cell,
+            next: self.next.clone(),
+        }
     }
 }
 /// Clones a range list node recursively.

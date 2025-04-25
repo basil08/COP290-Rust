@@ -1,6 +1,34 @@
 use crate::function_ext::Cell;
 use crate::function_ext::CellValue;
-
+/// Evaluates an arithmetic operation between two `Cell` values.
+///
+/// Supports operations on combinations of integers, floats, and strings:
+/// - Integer + Integer = Integer
+/// - Integer / Integer = Integer if divisible, otherwise Float
+/// - Float + Float = Float
+/// - Mixed Int/Float = Float
+/// - String + String = String concatenation
+///
+/// Returns an invalid `Cell` if:
+/// - Any operand is invalid
+/// - Division by zero occurs
+/// - Invalid operation is attempted (e.g., subtracting strings)
+///
+/// # Parameters
+/// - `v1`: First operand as a `Cell`
+/// - `v2`: Second operand as a `Cell`
+/// - `op`: Operator character (`+`, `-`, `*`, `/`)
+///
+/// # Returns
+/// A new `Cell` with the result of the operation or marked invalid.
+///
+/// # Examples
+/// ```
+/// let c1 = Cell::new_int(6);
+/// let c2 = Cell::new_int(3);
+/// let result = arithmetic_eval(c1, c2, '/');
+/// assert_eq!(result.value, CellValue::Int(2));
+/// ```
 pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
     if !v1.is_valid || !v2.is_valid {
         return Cell::invalid();
@@ -83,7 +111,26 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
         }
     }
 }
-
+/// Returns the internal operation code used to represent an arithmetic operator in formulas.
+///
+/// # Mapping
+/// - `+` → `1`
+/// - `-` → `2`
+/// - `*` → `3`
+/// - `/` → `4`
+/// - Any unsupported character → `-1`
+///
+/// # Parameters
+/// - `op`: Arithmetic operator character
+///
+/// # Returns
+/// An integer representing the operation type.
+///
+/// # Example
+/// ```
+/// assert_eq!(return_optype('+'), 1);
+/// assert_eq!(return_optype('x'), -1);
+/// ```
 pub fn return_optype(op: char) -> i32 {
     match op {
         '+' => 1,

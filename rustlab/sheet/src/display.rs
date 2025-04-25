@@ -1,6 +1,6 @@
 use crate::graph::Graph;
 use std::cmp::min;
-use std::i32;
+// use std::i32;
 
 /// Prints a 10×10 viewport of the spreadsheet from the current scroll position.
 ///
