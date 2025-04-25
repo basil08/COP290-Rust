@@ -6,9 +6,6 @@ edition = "2024"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[profile.release]
-codegen-units = 1
-lto = true
 
 [dependencies]
 leptos = { version = "0.5.4", features = ["csr"] }
