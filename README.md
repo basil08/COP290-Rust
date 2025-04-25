@@ -1,5 +1,8 @@
 # COP290 Rust Lab
 
+## Github
+Repo link: https://github.com/basil08/COP290-Rust
+
 ## Run
 
 0. `cd rustlab`
