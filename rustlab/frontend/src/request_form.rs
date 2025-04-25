@@ -1,3 +1,8 @@
+//! # Request Form Component
+//! 
+//! This module provides the form component that allows users to submit commands
+//! to the backend API and displays the responses.
+
 use gloo_net::http::Request;
 use serde_json;
 use wasm_bindgen_futures::spawn_local;
@@ -6,11 +11,21 @@ use yew::prelude::*;
 
 use crate::context::{AppAction, AppContext};
 
+/// Properties for the RequestForm component.
+///
+/// Contains the API URL endpoint that the form will submit requests to.
 #[derive(Properties, PartialEq)]
 pub struct RequestFormProps {
+    /// The API endpoint URL for sending query requests
     pub api_url: String,
 }
 
+/// A form component for submitting commands to the backend.
+///
+/// This component provides:
+/// - A text input for command entry
+/// - A submit button to execute the command
+/// - A response display area for showing API results
 #[function_component(RequestForm)]
 pub fn request_form(props: &RequestFormProps) -> Html {
     let input_ref = use_node_ref();
@@ -20,6 +35,14 @@ pub fn request_form(props: &RequestFormProps) -> Html {
     // Get the app context for triggering refreshes
     let app_context = use_context::<AppContext>().expect("no ctx found");
 
+    /// Handler for form submission events.
+    ///
+    /// This callback:
+    /// 1. Prevents default form submission
+    /// 2. Gets the query text from the input
+    /// 3. Sends the query to the API asynchronously
+    /// 4. Updates the response state with the result
+    /// 5. Triggers app refresh on success
     let onsubmit = {
         let input_ref = input_ref.clone();
         let response = response.clone();

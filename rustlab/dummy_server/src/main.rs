@@ -1,3 +1,8 @@
+//! # Rust Spreadsheet Backend Server
+//! 
+//! This module provides the HTTP server implementation for the Rust Spreadsheet application.
+//! It handles API endpoints for spreadsheet operations, state management, and client communication.
+
 mod handlers;
 mod operations;
 mod server_models;
@@ -20,11 +25,36 @@ use handlers::{get_sheet, process_query, redo_action, undo_action, update_cell};
 use server_models::Sheet;
 use types::{AppState, ExtendedState};
 
-// Helper function to create a snapshot (similar to the CLI version)
+/// Creates a snapshot of the current spreadsheet state for undo/redo functionality.
+///
+/// This function captures all data necessary to restore the sheet to a previous state,
+/// including cells, formulas, and dependency graph.
+///
+/// # Arguments
+///
+/// * `arr` - The array of cells representing the current sheet data
+/// * `formula_array` - The array of formulas associated with cells
+/// * `graph` - The dependency graph tracking relationships between cells
+///
+/// # Returns
+///
+/// A `StateSnapshot` containing clones of all state components
 fn create_snapshot(arr: &Vec<Cell>, formula_array: &Vec<Formula>, graph: &Graph) -> StateSnapshot {
     StateSnapshot { arr: arr.clone(), formula_array: formula_array.clone(), graph: graph.clone() }
 }
 
+/// Application entry point - initializes and runs the HTTP server.
+///
+/// This function:
+/// 1. Sets up the initial spreadsheet state
+/// 2. Configures API endpoints and CORS policy
+/// 3. Starts the HTTP server on the specified address
+///
+/// The server provides endpoints for:
+/// - Getting the sheet data
+/// - Updating individual cells
+/// - Processing queries
+/// - Undo/redo operations
 #[tokio::main]
 async fn main() {
     // Initialize the sheet with default values

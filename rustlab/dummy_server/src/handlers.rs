@@ -1,3 +1,9 @@
+//! # Request Handlers
+//! 
+//! This module contains handler functions for the various API endpoints exposed by
+//! the spreadsheet server. It implements the core functionality for retrieving sheet data,
+//! updating cells, processing queries, and performing undo/redo operations.
+
 use axum::{
     body::Bytes,
     extract::{Json as ExtractJson, State},
@@ -20,12 +26,37 @@ use sheet::{
     graph_ext::{Formula, Graph},
 };
 
+/// Retrieves the current spreadsheet data.
+///
+/// This handler returns the complete sheet data in a format suitable for 
+/// client-side rendering.
+///
+/// # Arguments
+///
+/// * `state` - Application state containing the current sheet
+///
+/// # Returns
+///
+/// The current spreadsheet as a JSON response
 pub async fn get_sheet(state: State<AppState>) -> Json<Sheet> {
     let sheet = state.read().await.sheet.clone();
     Json(sheet)
 }
 
-// Handle undo requests
+/// Handles requests to undo the last action.
+///
+/// This handler:
+/// 1. Removes the most recent state from the undo stack
+/// 2. Saves current state to the redo stack
+/// 3. Restores the previous state from the undo stack
+///
+/// # Arguments
+///
+/// * `state` - Application state containing undo/redo stacks and sheet data
+///
+/// # Returns
+///
+/// A JSON response indicating success or failure of the undo operation
 pub async fn undo_action(State(state): State<AppState>) -> Json<UndoRedoResponse> {
     let mut app_state = state.write().await;
 
@@ -53,7 +84,20 @@ pub async fn undo_action(State(state): State<AppState>) -> Json<UndoRedoResponse
     }
 }
 
-// Handle redo requests
+/// Handles requests to redo a previously undone action.
+///
+/// This handler:
+/// 1. Removes the most recent state from the redo stack
+/// 2. Saves current state to the undo stack
+/// 3. Restores the next state from the redo stack
+///
+/// # Arguments
+///
+/// * `state` - Application state containing undo/redo stacks and sheet data
+///
+/// # Returns
+///
+/// A JSON response indicating success or failure of the redo operation
 pub async fn redo_action(State(state): State<AppState>) -> Json<UndoRedoResponse> {
     let mut app_state = state.write().await;
 
@@ -81,7 +125,16 @@ pub async fn redo_action(State(state): State<AppState>) -> Json<UndoRedoResponse
     }
 }
 
-// Helper function to update the simple sheet model from cells
+/// Updates the simple sheet model from internal cell data.
+///
+/// This helper function synchronizes the sheet view model with the underlying cell data.
+///
+/// # Arguments
+///
+/// * `sheet` - The sheet model to update
+/// * `cells` - Source cell data
+/// * `rows` - Number of rows in the sheet
+/// * `cols` - Number of columns in the sheet
 fn update_simple_sheet_from_cells(sheet: &mut Sheet, cells: &[Cell], rows: usize, cols: usize) {
     for r in 0..rows {
         for c in 0..cols {
@@ -100,7 +153,19 @@ fn update_simple_sheet_from_cells(sheet: &mut Sheet, cells: &[Cell], rows: usize
     }
 }
 
-// Update your existing update_cell handler to use the extended functionality
+/// Updates a specific cell in the spreadsheet.
+///
+/// This handler processes cell update requests from the client,
+/// parsing and evaluating formulas if needed.
+///
+/// # Arguments
+///
+/// * `state` - Application state containing the current sheet
+/// * `payload` - Update request containing row, column, and new value
+///
+/// # Returns
+///
+/// A JSON response indicating success or failure of the update operation
 pub async fn update_cell(
     State(state): State<AppState>,
     ExtractJson(payload): ExtractJson<UpdateCellRequest>,
@@ -128,20 +193,6 @@ pub async fn update_cell(
 
     let mut app_state = state.write().await;
     let cols = app_state.sheet.data[0].len();
-
-    // let cells_clone  = app_state.cells.clone();
-    // let formula_array_clone = app_state.formula_array.clone();
-    // let graph_clone = app_state.graph.clone();
-    // // Save current state for undo before modifying
-    // app_state.undo_stack.push(create_snapshot(&cells_clone, &formula_array_clone, &graph_clone));
-
-    // // Limit undo stack size to 5 entries
-    // if app_state.undo_stack.len() > 5 {
-    //     app_state.undo_stack.remove(0);
-    // }
-
-    // // Clear redo stack when making a new change
-    // app_state.redo_stack.clear();
 
     // Calculate 1D index from row and column
     let cell_index = row_index * cols + col_index;
@@ -216,13 +267,30 @@ pub async fn update_cell(
         app_state.sheet.data[row_index][col_index].value = CellValue::String(payload.value.clone());
     }
 
-    // Update the regular sheet data for API compatibility
-    // app_state.sheet.data[row_index][col_index].value = string_to_cell(&payload.value);
-
     // Return success response
     Json(UpdateResponse { success: true, message: "Cell updated successfully".to_string() })
 }
 
+/// Parses and evaluates a cell formula.
+///
+/// This function handles different types of formulas:
+/// - Simple values (e.g., =10)
+/// - Arithmetic expressions (e.g., =A1+B2)
+/// - Functions (e.g., =SUM(A1:B3))
+///
+/// # Arguments
+///
+/// * `a` - The formula string
+/// * `c` - Number of columns in the sheet
+/// * `r` - Number of rows in the sheet
+/// * `arr` - Array of cells to update
+/// * `graph` - Dependency graph
+/// * `formula_array` - Array of formulas
+/// * `state` - Parser state
+///
+/// # Returns
+///
+/// Result indicating success or an error message
 pub fn cell_parser(
     a: &str,
     c: i32,
@@ -296,6 +364,18 @@ pub fn cell_parser(
     Ok(())
 }
 
+/// Converts a string value to the appropriate cell value type.
+///
+/// Attempts to parse the string as an integer first, then as a float,
+/// and defaults to string if neither conversion succeeds.
+///
+/// # Arguments
+///
+/// * `value` - The string value to convert
+///
+/// # Returns
+///
+/// The appropriate CellValue variant based on the parsed type
 pub fn string_to_cell(value: &str) -> CellValue {
     if let Ok(int_value) = value.parse::<i32>() {
         CellValue::Int(int_value)
@@ -306,8 +386,19 @@ pub fn string_to_cell(value: &str) -> CellValue {
     }
 }
 
-// Function to process string commands
-// Modify your process_query function to use the extended functionality
+/// Processes query commands sent from the client.
+///
+/// This handler parses and executes commands like formulas,
+/// functions, and other operations on the spreadsheet data.
+///
+/// # Arguments
+///
+/// * `state` - Application state containing the current sheet
+/// * `body` - Raw request body containing the query string
+///
+/// # Returns
+///
+/// A JSON response with the result of the executed query
 pub async fn process_query(State(state): State<AppState>, body: Bytes) -> impl IntoResponse {
     // Convert bytes to string
     let query_string = match String::from_utf8(body.to_vec()) {

@@ -1,3 +1,8 @@
+//! # Table Component
+//! 
+//! This module provides the spreadsheet grid component that displays cell data and
+//! allows for cell interaction.
+
 use gloo::console::log;
 use gloo::net::http::Request;
 use wasm_bindgen_futures::spawn_local;
@@ -9,6 +14,12 @@ use crate::context::AppContext;
 use crate::models::*;
 use sheet::function_ext::{Cell, CellValue};
 
+/// The main spreadsheet table component.
+///
+/// This component:
+/// - Fetches sheet data from the backend
+/// - Displays the grid of cells with row and column headers
+/// - Refreshes when the application state changes
 #[function_component(TableComponent)]
 pub fn table_component() -> Html {
     let sheet_state = use_state(|| None::<Sheet>);
@@ -22,6 +33,7 @@ pub fn table_component() -> Html {
         let error_state = error_state.clone();
         let refresh_counter = app_context.refresh_counter;
 
+        // Effect to fetch sheet data when the refresh counter changes
         use_effect_with(refresh_counter, move |_| {
             let sheet_state = sheet_state.clone();
             let error_state = error_state.clone();
@@ -112,6 +124,15 @@ pub fn table_component() -> Html {
     }
 }
 
+/// Converts a zero-based column index to an Excel-style column label (A, B, C, ..., Z, AA, AB, etc.)
+///
+/// # Arguments
+///
+/// * `index` - The zero-based index of the column
+///
+/// # Returns
+///
+/// A string representing the column label (e.g., 0 → "A", 25 → "Z", 26 → "AA")
 pub fn column_label(mut index: usize) -> String {
     let mut label = String::new();
     index += 1;
