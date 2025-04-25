@@ -1,3 +1,9 @@
+//! # Spreadsheet Operations
+//! 
+//! This module contains utility functions for performing operations on
+//! spreadsheet cells and ranges, such as calculating sums, averages,
+//! and clearing cell contents.
+
 use crate::types::{AppState, QueryResponse};
 use axum::Json;
 
@@ -5,6 +11,15 @@ use sheet::function_ext::{Cell, CellValue};
 
 use crate::server_models::Sheet;
 
+/// Converts a cell value to its string representation.
+///
+/// # Arguments
+///
+/// * `cell` - The cell value to convert
+///
+/// # Returns
+///
+/// A string representation of the cell value
 pub fn cell_to_string(cell: &CellValue) -> String {
     match cell {
         CellValue::Int(i) => i.to_string(),
@@ -13,7 +28,17 @@ pub fn cell_to_string(cell: &CellValue) -> String {
     }
 }
 
-// Helper function to parse cell coordinates from a query
+/// Parses cell coordinates from a query string.
+///
+/// Expects format: "row,col" where both are integers
+///
+/// # Arguments
+///
+/// * `coord_str` - String containing the cell coordinates
+///
+/// # Returns
+///
+/// A tuple containing (row, col) indices or an error message
 pub fn parse_cell_coordinates(coord_str: &str) -> Result<(usize, usize), &'static str> {
     let parts: Vec<&str> = coord_str.split(',').collect();
     if parts.len() != 2 {
@@ -26,7 +51,16 @@ pub fn parse_cell_coordinates(coord_str: &str) -> Result<(usize, usize), &'stati
     Ok((row, col))
 }
 
-// Helper function to calculate sum of cells in a range
+/// Calculates the sum of cells in a specified range.
+///
+/// # Arguments
+///
+/// * `state` - Application state containing the sheet data
+/// * `query` - Query string specifying the range to sum
+///
+/// # Returns
+///
+/// A JSON response containing the sum result
 pub async fn calculate_sum(state: &AppState, query: &str) -> Json<QueryResponse> {
     Json(QueryResponse {
         success: true,
@@ -35,7 +69,16 @@ pub async fn calculate_sum(state: &AppState, query: &str) -> Json<QueryResponse>
     })
 }
 
-// Helper function to calculate average of cells in a range
+/// Calculates the average of cells in a specified range.
+///
+/// # Arguments
+///
+/// * `state` - Application state containing the sheet data
+/// * `query` - Query string specifying the range to average
+///
+/// # Returns
+///
+/// A JSON response containing the average result
 pub async fn calculate_average(state: &AppState, query: &str) -> Json<QueryResponse> {
     Json(QueryResponse {
         success: true,
@@ -44,7 +87,19 @@ pub async fn calculate_average(state: &AppState, query: &str) -> Json<QueryRespo
     })
 }
 
-// Helper function to clear cells in a range
+/// Clears cells in a specified range or the entire sheet.
+///
+/// If only "clear" is provided without coordinates, all cells are cleared.
+/// Otherwise, only the specified range is cleared.
+///
+/// # Arguments
+///
+/// * `state` - Application state containing the sheet data
+/// * `query` - Query string specifying what to clear
+///
+/// # Returns
+///
+/// A JSON response indicating how many cells were cleared
 pub async fn clear_cells(state: &AppState, query: &str) -> Json<QueryResponse> {
     let parts: Vec<&str> = query.split_whitespace().collect();
 
@@ -75,7 +130,16 @@ pub async fn clear_cells(state: &AppState, query: &str) -> Json<QueryResponse> {
     }
 }
 
-// Helper function to count non-empty cells in a range
+/// Counts non-empty cells in a specified range.
+///
+/// # Arguments
+///
+/// * `state` - Application state containing the sheet data
+/// * `query` - Query string specifying the range to count
+///
+/// # Returns
+///
+/// A JSON response containing the count result
 pub async fn count_cells(state: &AppState, query: &str) -> Json<QueryResponse> {
     Json(QueryResponse {
         success: true,
