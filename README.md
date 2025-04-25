@@ -11,6 +11,7 @@
 ## Demo
 
 WebSocket and CRDT-based web application: https://drive.google.com/file/d/1wHeTSfXqq1nNGKBzuj7Uh3y8yFwbZ7H6/view?usp=sharing
+Demo video for Client Server: https://csciitd-my.sharepoint.com/:v:/g/personal/ee1230978_iitd_ac_in/ERheCVFbamNGuioyMfLU_qoBPc0Bi7PNp76wGh4ko9E9XQ?e=MqsM8R
 
 Please see rustlab/README.md for instructions to run the different extensions and base app.
 Makefile is inside rustlab/.
@@ -63,6 +64,33 @@ ASSIGN STRING TO A CELL
 
 ## Web Application
 
+Demo video [here](https://csciitd-my.sharepoint.com/:v:/g/personal/ee1230978_iitd_ac_in/ERheCVFbamNGuioyMfLU_qoBPc0Bi7PNp76wGh4ko9E9XQ?e=MqsM8R)
+
+This is GUI with client-server model, 
+server will start on a fixed port (i.e 3001)
+clients can be initiated in different ports
+
+The app is distributed among `frontend`, `dummy_server` 
+
+To start server, run (The default port is 3001)
+```
+$ cd rustlab/dummy_server
+$ cargo run
+```
+
+To start client, make sure `trunk` is installed.
+```
+$ cargo install trunk
+```
+
+Then, run
+multiple client can also be running simultaneously
+```
+cd rustlab/frontend
+trunk server --port <port_number>
+```
+
+Browse to `http::/localhost:<port_number>` to access the app.
 
 ## WebSocket and CRDT based Web Application
 
@@ -88,7 +116,6 @@ $ cargo install trunk
 ```
 
 Then, run
-
 ```
 $ cd rustlab/ws_client
 $ trunk serve
