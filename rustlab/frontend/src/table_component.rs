@@ -1,5 +1,5 @@
 //! # Table Component
-//! 
+//!
 //! This module provides the spreadsheet grid component that displays cell data and
 //! allows for cell interaction.
 

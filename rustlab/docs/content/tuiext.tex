@@ -1,0 +1,199 @@
+% \documentclass[12pt]{article}
+% \usepackage[margin=1in]{geometry}
+% \usepackage{enumitem}
+% \usepackage{hyperref}
+% \usepackage{fancyhdr}
+% \pagestyle{fancy}
+% \fancyhf{}
+% \rhead{Spreadsheet Project Report}
+% \lhead{COP290 - IIT Delhi}
+% \rfoot{\thepage}
+
+\title{Spreadsheet System: Design, Extensions, and Architecture Report}
+
+\subsection*{2.1. Command-Line Interface and Mode Selection}
+Our Rust-based spreadsheet system supports two runtime-selectable modes: \textbf{Standard} and \textbf{Extended}. This design enables clean separation of concerns and feature modularity.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Standard Mode:}
+    \begin{verbatim}
+    make 
+    ./target/release/spreadsheet 10 10
+    \end{verbatim}
+    \textit{Modules Used:} \texttt{parser.rs}, \texttt{function.rs}, \texttt{graph.rs}, \texttt{display.rs}
+
+    \textit{Core Features:}
+    \begin{itemize}
+        \item Integer-only cell support
+        \item Basic arithmetic operations (+, -, *, /)
+        \item Range functions: SUM, AVG, MIN, MAX, STDEV
+        \item Sleep functionality to delay cell evaluation
+    \end{itemize}
+
+    \item \textbf{Extended Mode:}
+    \begin{verbatim}
+    make 
+    ./target/release/spreadsheet -extended 10 10
+    \end{verbatim}
+    \textit{Modules Used:} \texttt{parser\_ext.rs}, \texttt{function\_ext.rs}, \texttt{graph\_ext.rs}, \texttt{display\_ext.rs}, \texttt{util\_ext.rs}
+
+    \textit{Additional Features:}
+    \begin{itemize}
+        \item Support for float and string cell types
+        \item String concatenation using '+'
+        \item Pattern-based Autofill: Arithmetic (AP), Geometric (GP), Fibonacci, Constant
+        \item Undo/Redo via \texttt{StateSnapshot}
+    \end{itemize}
+\end{itemize}
+
+\subsection*{2.2. Software Architecture}
+The system follows a layered, modular architecture:
+
+\textbf{Core Modules:}
+\begin{itemize}
+    \item \texttt{parser.rs} / \texttt{parser\_ext.rs} – expression parsing
+    \item \texttt{function.rs} / \texttt{function\_ext.rs} – function evaluations
+    \item \texttt{graph.rs} / \texttt{graph\_ext.rs} – dependency tracking and cycle detection
+    \item \texttt{display.rs} / \texttt{display\_ext.rs} – terminal UI rendering
+    \item \texttt{util\_ext.rs} – shared utilities (e.g., polymorphic arithmetic handling)
+\end{itemize}
+
+\textbf{Entry Point:} \texttt{rustlab/cli/main.rs} dynamically selects between standard and extended based on CLI flag \texttt{-extended}.
+
+\subsection*{2.3. Key Extensions Implemented}
+\begin{itemize}
+    \item \textbf{Typed Cells:} Cells can now hold \texttt{Int}, \texttt{Float}, or \texttt{String} using an enum-based \texttt{CellValue}.
+    \item \textbf{String Operations:} Support for string assignment and `+`-based concatenation.
+    \item \textbf{Mixed-Type Arithmetic:} Fully supports operations like `Float + Int`, `Int / Int`, and errors on invalid ops (e.g., `String - Float`).
+    \item \textbf{Autofill Feature:} From a 4-cell seed, detects AP/GP/Fibonacci/Constant and populates the column up to a given length.
+    \item \textbf{Undo/Redo:} Snapshots captured as \texttt{StateSnapshot}, used for user-directed rollback.
+\end{itemize}
+
+\subsection*{2.4. Primary Data Structures}
+\begin{itemize}
+    \item \texttt{CellValue (enum)}: \texttt{Int(i32) | Float(f64) | String(String)}
+    \item \texttt{Cell}: Holds \texttt{CellValue} and a validity flag
+    \item \texttt{Formula}: Stores op\_type, op\_info1, op\_info2 to describe each cell’s formula
+    \item \texttt{Graph / GraphExt}: Adjacency list and range dependency representation
+    \item \texttt{State / StateSnapshot}: Captures pre-modification state for undo/redo
+\end{itemize}
+
+\subsection*{2.5. Module Interfaces}
+\begin{itemize}
+    \item \texttt{parser → graph}: Adds/removes edges and ranges
+    \item \texttt{parser → function}: Invokes range or arithmetic evaluation
+    \item \texttt{graph → recalc}: Handles topological sort and propagation
+    \item \texttt{display → core}: Renders spreadsheet with ERR/value handling
+    \item \texttt{parser\_ext → util\_ext}: Performs typed arithmetic via \texttt{arithmetic\_eval}
+\end{itemize}
+
+\subsection*{2.6. Encapsulation Strategies}
+\begin{itemize}
+    \item Separate file namespace for `\_ext` modules; standard and extended logic never mix
+    \item Use of stateless pure functions where possible
+    \item Unsafe usage (\texttt{static mut}) restricted to well-documented parser.rs
+    \item Public APIs shield internals of evaluation and recalculation logic
+\end{itemize}
+
+\subsection*{2.7. Design Justification}
+\begin{itemize}
+    \item Easy switching between standard and extended logic based on mode
+    \item Clear path for future extensions (e.g., Date type, Graph plots)
+    \item Minimized duplication through shared utilities like \texttt{util\_ext.rs}
+    \item Debug-friendly separation: extended features can be tested without affecting standard ones
+\end{itemize}
+
+\subsection*{2.8. Design Modifications During Development}
+\begin{itemize}
+    \item Introduced \texttt{static mut HAS\_CYCLE} and \texttt{INVALID\_RANGE} for backtracking in parser
+    \item Moved from shared modules to a clean \texttt{\_ext.rs} hierarchy
+    \item Added pattern recognition + generation to support autofill logic
+    \item Modified formula structure to accommodate multi-typed cells
+\end{itemize}
+
+
+
+\subsection*{2.9. Demonstration of Extensions}
+
+The following session demonstrates the extended features including string operations, float handling, mixed-type formula evaluation, and autofill.
+
+\subsubsection*{Running the Spreadsheet in Extended Mode}
+
+\begin{verbatim}
+$ ./target/release/spreadsheet -extended 10 10
+\end{verbatim}
+
+This command launches a 10x10 spreadsheet grid in extended mode.
+
+\subsubsection*{Testing String Cell Support}
+
+We input string values and concatenate them:
+
+\begin{verbatim}
+> A1="hi"
+> A2="hello"
+> A3=A1+A2
+\end{verbatim}
+
+Result:
+\begin{itemize}
+  \item A1 = "hi"
+  \item A2 = "hello"
+  \item A3 = "hihello" (concatenation successful)
+\end{itemize}
+If A1 is changed to "hello", A3 will be changed to "hellohello"
+\subsubsection*{Testing Float Support and Arithmetic}
+
+We input float and integer values, then add them:
+
+\begin{verbatim}
+> B1=1.09
+> B2=90
+> B3=B1+B2
+\end{verbatim}
+
+Result:
+\begin{itemize}
+  \item B1 = 1.09
+  \item B2 = 90
+  \item B3 = 91.09
+\end{itemize}
+If B2 is changed to 0, B3 will be changed to 1.09
+\subsubsection*{Autofill Feature Demonstration}
+
+We manually seed a pattern and autofill a column:
+
+\begin{verbatim}
+> C1=1
+> C2=2
+> C3=3
+> C4=4
+> =autofill C 10
+\end{verbatim}
+
+Result:
+\begin{itemize}
+  \item Column C is autofilled as 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.
+\end{itemize}
+
+Similarly, patterns like AP, GP, fibonacci and constants can be autofilled.
+
+\subsubsection*{Undo/Redo Functionality }
+Demonstrates snapshot-based state restoration:
+\begin{verbatim}
+> A1=90
+> A2=8
+> undo        % Reverts A2=8
+> undo        % Reverts A1=90
+> redo        % Redoes A1=90
+> redo        % Redoes A2=8
+> redo        % No effect (nothing to redo)
+\end{verbatim}
+    Result:
+\begin{itemize}
+    \item After first undo: A1 = 90, A2 = 0
+    \item After second undo: A1 = 0, A2 = 0
+    \item After two redos: A1 = 90, A2 = 8
+\end{itemize}
+
+

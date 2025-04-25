@@ -1,5 +1,5 @@
 //! # Type Definitions
-//! 
+//!
 //! This module defines the core data types used throughout the application,
 //! including state management structures, request and response formats,
 //! and API interfaces.
@@ -22,19 +22,19 @@ use sheet::graph_ext::{Formula, Graph, State, StateSnapshot};
 /// - Current cursor position
 pub struct ExtendedState {
     /// Sheet model for API compatibility with existing endpoints
-    pub sheet: Sheet,                   
+    pub sheet: Sheet,
     /// Typed cells (int, float, string)
-    pub cells: Vec<Cell>,               
+    pub cells: Vec<Cell>,
     /// Cell formulas
-    pub formula_array: Vec<Formula>,    
+    pub formula_array: Vec<Formula>,
     /// Dependency graph for formula evaluation
-    pub graph: Graph,                   
+    pub graph: Graph,
     /// Global sheet state
-    pub state: State,                   
+    pub state: State,
     /// Stack of previous states for undo operations
-    pub undo_stack: Vec<StateSnapshot>, 
+    pub undo_stack: Vec<StateSnapshot>,
     /// Stack of undone states for redo operations
-    pub redo_stack: Vec<StateSnapshot>         
+    pub redo_stack: Vec<StateSnapshot>,
 }
 
 /// Thread-safe shared application state.

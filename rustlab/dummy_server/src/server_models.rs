@@ -1,5 +1,5 @@
 //! # Server Models
-//! 
+//!
 //! This module defines the data structures used by the server to represent
 //! the spreadsheet state. These models are serializable for client-server communication.
 
@@ -32,7 +32,7 @@ impl Sheet {
     pub fn new(rows: usize, cols: usize) -> Self {
         Self { data: vec![vec![Cell::new_int(0); cols]; rows] }
     }
-    
+
     /// Returns a reference to the grid of cells.
     ///
     /// # Returns
