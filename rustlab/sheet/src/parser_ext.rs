@@ -154,10 +154,7 @@ pub fn autofill(
         let idx = row * cols as usize + col_idx;
         arr[idx] = Cell::new_int(val);
     }
-    println!(
-        "[autofill] autofilled column {} to length {}",
-        col_char, length
-    );
+    println!("[autofill] autofilled column {} to length {}", col_char, length);
     Ok(())
 }
 /// Parses and sets a value (int, float, string, or cell reference) into a target cell.
@@ -217,13 +214,9 @@ pub fn value_func(
 
         return Ok(());
     } else if a[pos..pos_end].chars().all(is_digit) {
-        second_cell = a[pos..pos_end]
-            .parse::<i32>()
-            .map_err(|_| "Invalid integer")?;
+        second_cell = a[pos..pos_end].parse::<i32>().map_err(|_| "Invalid integer")?;
     } else if a[pos..pos_end].chars().any(|ch| ch == '.') {
-        let float_value = a[pos..pos_end]
-            .parse::<f64>()
-            .map_err(|_| "Invalid float")?;
+        let float_value = a[pos..pos_end].parse::<f64>().map_err(|_| "Invalid float")?;
         arr[first_cell as usize] = Cell::new_float(float_value);
         // println!("[DEBUG] Float value of cell : {:?}", arr[first_cell as usize]);
         // println!("[DEBUG] Float value: {}", float_value);
@@ -365,10 +358,7 @@ pub fn arth_op(
         second_cell = cell_parser(a, c, r, start, opindex - 1)?;
         is1cell = true;
     } else {
-        second_cell = first_part
-            .parse::<i32>()
-            .map_err(|_| "Invalid first operand")?
-            * sign1;
+        second_cell = first_part.parse::<i32>().map_err(|_| "Invalid first operand")? * sign1;
     }
 
     let mut second_start = opindex + 1;
@@ -384,10 +374,7 @@ pub fn arth_op(
         third_cell = cell_parser(a, c, r, second_start, pos_end - 1)?;
         is2cell = true;
     } else {
-        third_cell = second_part
-            .parse::<i32>()
-            .map_err(|_| "Invalid second operand")?
-            * sign2;
+        third_cell = second_part.parse::<i32>().map_err(|_| "Invalid second operand")? * sign2;
     }
 
     match (is1cell, is2cell) {
@@ -481,18 +468,12 @@ pub fn range_func(
     }
 
     let eq_str = &a[pos_equalto..];
-    let open_paren = eq_str
-        .find('(')
-        .map(|i| i + pos_equalto)
-        .ok_or("Missing opening parenthesis")?;
-    let close_paren = eq_str
-        .find(')')
-        .map(|i| i + pos_equalto)
-        .ok_or("Missing closing parenthesis")?;
-    let colon_pos = a[open_paren + 1..]
-        .find(':')
-        .map(|i| i + open_paren + 1)
-        .ok_or("Missing colon")?;
+    let open_paren =
+        eq_str.find('(').map(|i| i + pos_equalto).ok_or("Missing opening parenthesis")?;
+    let close_paren =
+        eq_str.find(')').map(|i| i + pos_equalto).ok_or("Missing closing parenthesis")?;
+    let colon_pos =
+        a[open_paren + 1..].find(':').map(|i| i + open_paren + 1).ok_or("Missing colon")?;
 
     let range_start = cell_parser(a, c, r, open_paren + 1, colon_pos - 1)?;
     let range_end = cell_parser(a, c, r, colon_pos + 1, close_paren - 1)?;
@@ -543,14 +524,10 @@ pub fn sleep_func(
     }
 
     let eq_str = &a[pos_equalto..];
-    let open_paren = eq_str
-        .find('(')
-        .map(|i| i + pos_equalto)
-        .ok_or("Missing opening parenthesis")?;
-    let close_paren = eq_str
-        .find(')')
-        .map(|i| i + pos_equalto)
-        .ok_or("Missing closing parenthesis")?;
+    let open_paren =
+        eq_str.find('(').map(|i| i + pos_equalto).ok_or("Missing opening parenthesis")?;
+    let close_paren =
+        eq_str.find(')').map(|i| i + pos_equalto).ok_or("Missing closing parenthesis")?;
 
     let ref_cell = cell_parser(a, c, r, open_paren + 1, close_paren - 1);
     if let Ok(ref_cell) = ref_cell {
@@ -558,9 +535,7 @@ pub fn sleep_func(
         graph.add_edge(target_cell, ref_cell as usize);
     } else {
         let sleep_str = &a[open_paren + 1..close_paren];
-        let sleep_value = sleep_str
-            .parse::<i32>()
-            .map_err(|_| "Invalid sleep value")?;
+        let sleep_value = sleep_str.parse::<i32>().map_err(|_| "Invalid sleep value")?;
         graph.add_formula(target_cell, target_cell, sleep_value, 14, formula_array);
     }
 
@@ -651,104 +626,29 @@ pub fn parser(
     }
 
     if value {
-        value_func(
-            a,
-            c,
-            r,
-            pos_equalto,
-            pos_end,
-            arr,
-            graph,
-            formula_array,
-            state,
-        )?;
+        value_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?;
     } else if arth_exp {
-        arth_op(
-            a,
-            c,
-            r,
-            pos_equalto,
-            pos_end,
-            arr,
-            graph,
-            formula_array,
-            state,
-        )?;
+        arth_op(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?;
     } else if func {
         let func_name = &a[pos_equalto + 1..a[pos_equalto..].find('(').unwrap() + pos_equalto];
         println!("[DEBUG] Function name: {}", func_name);
         match func_name {
-            "MIN" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                9,
-            )?,
-            "MAX" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                10,
-            )?,
-            "AVG" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                11,
-            )?,
-            "SUM" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                12,
-            )?,
-            "STDEV" => range_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-                13,
-            )?,
-            "SLEEP" => sleep_func(
-                a,
-                c,
-                r,
-                pos_equalto,
-                pos_end,
-                arr,
-                graph,
-                formula_array,
-                state,
-            )?,
+            "MIN" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 9)?
+            }
+            "MAX" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 10)?
+            }
+            "AVG" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 11)?
+            }
+            "SUM" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 12)?
+            }
+            "STDEV" => {
+                range_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state, 13)?
+            }
+            "SLEEP" => sleep_func(a, c, r, pos_equalto, pos_end, arr, graph, formula_array, state)?,
 
             _ => return Err("Unknown function"),
         }
