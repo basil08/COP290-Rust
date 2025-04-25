@@ -11,6 +11,7 @@
 ## Demo
 
 WebSocket and CRDT-based web application: https://drive.google.com/file/d/1wHeTSfXqq1nNGKBzuj7Uh3y8yFwbZ7H6/view?usp=sharing
+Demo video for Client Server: https://csciitd-my.sharepoint.com/:v:/g/personal/ee1230978_iitd_ac_in/ERheCVFbamNGuioyMfLU_qoBPc0Bi7PNp76wGh4ko9E9XQ?e=MqsM8R
 
 Please see rustlab/README.md for instructions to run the different extensions and base app.
 Makefile is inside rustlab/.
