@@ -1,5 +1,5 @@
 //! # Cell Component
-//! 
+//!
 //! This module provides a component for individual spreadsheet cells with editing capabilities.
 //! It handles user interaction, cell value updates, and communication with the backend API.
 
@@ -81,7 +81,7 @@ pub fn cell_component(props: &Props) -> Html {
     };
 
     // Handler for blur events on the input field.
-    // 
+    //
     // When the input loses focus:
     // 1. Checks if the value has changed
     // 2. If changed, sends an update to the backend API
@@ -143,7 +143,7 @@ pub fn cell_component(props: &Props) -> Html {
     };
 
     // Handler for keypress events.
-    // 
+    //
     // Handles special key behavior:
     // - Enter key: Submits the edit by blurring the input field
     let onkeypress = {
@@ -163,7 +163,7 @@ pub fn cell_component(props: &Props) -> Html {
     };
 
     // Handler for input events.
-    // 
+    //
     // Updates the component's internal state as the user types.
     let oninput = {
         let value = value.clone();

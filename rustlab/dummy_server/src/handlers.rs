@@ -1,5 +1,5 @@
 //! # Request Handlers
-//! 
+//!
 //! This module contains handler functions for the various API endpoints exposed by
 //! the spreadsheet server. It implements the core functionality for retrieving sheet data,
 //! updating cells, processing queries, and performing undo/redo operations.
@@ -28,7 +28,7 @@ use sheet::{
 
 /// Retrieves the current spreadsheet data.
 ///
-/// This handler returns the complete sheet data in a format suitable for 
+/// This handler returns the complete sheet data in a format suitable for
 /// client-side rendering.
 ///
 /// # Arguments
@@ -442,12 +442,10 @@ pub async fn process_query(State(state): State<AppState>, body: Bytes) -> impl I
                 result: None,
             })
         }
-        Err(e) => {
-            Json(QueryResponse {
-                success: false,
-                message: format!("Formula error: {}", e),
-                result: None,
-            })
-        }
+        Err(e) => Json(QueryResponse {
+            success: false,
+            message: format!("Formula error: {}", e),
+            result: None,
+        }),
     }
 }

@@ -1,5 +1,5 @@
 //! # Application Context Module
-//! 
+//!
 //! This module defines the application state management and context for the spreadsheet.
 //! It provides a central state mechanism using Yew's reducer pattern for components
 //! to interact with shared application data.

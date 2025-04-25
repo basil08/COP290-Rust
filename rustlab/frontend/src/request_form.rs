@@ -1,5 +1,5 @@
 //! # Request Form Component
-//! 
+//!
 //! This module provides the form component that allows users to submit commands
 //! to the backend API and displays the responses.
 

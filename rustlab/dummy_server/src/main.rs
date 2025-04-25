@@ -1,5 +1,5 @@
 //! # Rust Spreadsheet Backend Server
-//! 
+//!
 //! This module provides the HTTP server implementation for the Rust Spreadsheet application.
 //! It handles API endpoints for spreadsheet operations, state management, and client communication.
 
@@ -37,7 +37,11 @@ use types::ExtendedState;
 ///
 /// A `StateSnapshot` containing clones of all state components
 fn create_snapshot(arr: &[Cell], formula_array: &[Formula], graph: &Graph) -> StateSnapshot {
-    StateSnapshot { arr: arr.to_owned(), formula_array: formula_array.to_owned(), graph: graph.clone() }
+    StateSnapshot {
+        arr: arr.to_owned(),
+        formula_array: formula_array.to_owned(),
+        graph: graph.clone(),
+    }
 }
 
 /// Application entry point - initializes and runs the HTTP server.
@@ -80,7 +84,7 @@ async fn main() {
         graph: graph.clone(),
         state: state.clone(),
         undo_stack,
-        redo_stack
+        redo_stack,
     };
     let app_state = Arc::new(RwLock::new(extended_state));
 
