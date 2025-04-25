@@ -123,6 +123,21 @@ pub fn scroller(
                 *currx += min(10, remaining_cols);
             }
         }
+        _ if a.starts_with("scroll_to ") => {
+            if let Some(cell) = crate::parser::cell_parser(a, c, r, 10, a.len() - 1, _graph) {
+                let row = cell / c;
+                let col = cell % c;
+
+                if row < r && col < c {
+                    *currx = col;
+                    *curry = row;
+                } else {
+                    return -1;
+                }
+            } else {
+                return -1;
+            }
+        }
         _ => return -1, // Unknown command
     }
 
