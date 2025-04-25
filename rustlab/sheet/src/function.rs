@@ -307,10 +307,7 @@ pub fn sleep_func(
 ) -> i32 {
     let target_cell = cell_parser(a, c, r, 0, eq_idx - 1, graph).unwrap_or_else(error_usize);
     let open_paren = a[eq_idx..].find('(').map(|i| i + eq_idx).unwrap_or(0);
-    let close_paren = a[eq_idx..]
-        .find(')')
-        .map(|i| i + eq_idx)
-        .unwrap_or(a.len() - 1);
+    let close_paren = a[eq_idx..].find(')').map(|i| i + eq_idx).unwrap_or(a.len() - 1);
     if close_paren <= open_paren + 1 {
         // println!("Invalid sleep function syntax");
         return error_return();
@@ -324,14 +321,7 @@ pub fn sleep_func(
             return 1;
         }
         graph.add_edge(ref_cell, target_cell);
-        Graph::add_formula(
-            graph,
-            target_cell,
-            ref_cell,
-            sleep_value as usize,
-            14,
-            formula_array,
-        );
+        Graph::add_formula(graph, target_cell, ref_cell, sleep_value as usize, 14, formula_array);
         if sleep_value > 0 {
             // println!("Sleeping for {} seconds 1", sleep_value);
             // sleep(Duration::from_secs(sleep_value as u64));
@@ -342,14 +332,7 @@ pub fn sleep_func(
     } else {
         // println!("2");
         let value: i32 = a[open_paren + 1..close_paren].trim().parse().unwrap_or(-1);
-        Graph::add_formula(
-            graph,
-            target_cell,
-            target_cell,
-            value as usize,
-            14,
-            formula_array,
-        );
+        Graph::add_formula(graph, target_cell, target_cell, value as usize, 14, formula_array);
         arr[target_cell] = value;
         if value > 0 {
             // println!("Sleeping for {} seconds 2", value);

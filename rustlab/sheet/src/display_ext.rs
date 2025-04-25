@@ -45,11 +45,8 @@ pub fn printer(currx: i32, curry: i32, arr: &[Cell], c: i32, r: i32) {
                     CellValue::Int(i) => print!("{:<10}", i),
                     CellValue::Float(f) => print!("{:<10.2}", f),
                     CellValue::String(s) => {
-                        let truncated = if s.len() > 10 {
-                            format!("{:.10}", &s[..10])
-                        } else {
-                            s.clone()
-                        };
+                        let truncated =
+                            if s.len() > 10 { format!("{:.10}", &s[..10]) } else { s.clone() };
                         print!("{:<10}", truncated);
                     }
                 }

@@ -48,10 +48,7 @@ pub struct Graph {
 }
 impl Clone for Graph {
     fn clone(&self) -> Self {
-        Graph {
-            adj_lists_head: self.adj_lists_head.clone(),
-            ranges_head: self.ranges_head.clone(),
-        }
+        Graph { adj_lists_head: self.adj_lists_head.clone(), ranges_head: self.ranges_head.clone() }
     }
 }
 
@@ -64,10 +61,7 @@ impl Graph {
         for _ in 0..num_cells {
             adj_lists_head.push(None);
         }
-        Graph {
-            adj_lists_head,
-            ranges_head: None,
-        }
+        Graph { adj_lists_head, ranges_head: None }
     }
 
     /// Adds a formula for a specific cell, recording the operation type and operands.
@@ -84,11 +78,7 @@ impl Graph {
         op_type: i32,
         formula_array: &mut [Formula],
     ) {
-        let mut new_formula = Formula {
-            op_type,
-            op_info1: -1,
-            op_info2: -1,
-        };
+        let mut new_formula = Formula { op_type, op_info1: -1, op_info2: -1 };
         if op_type == 0 {
             new_formula.op_info1 = c1;
         } else {
@@ -306,16 +296,10 @@ impl Graph {
             let start_col = start_cell % cols;
             let end_row = end_cell / cols;
             let end_col = end_cell % cols;
-            let (start_row, end_row) = if start_row > end_row {
-                (end_row, start_row)
-            } else {
-                (start_row, end_row)
-            };
-            let (start_col, end_col) = if start_col > end_col {
-                (end_col, start_col)
-            } else {
-                (start_col, end_col)
-            };
+            let (start_row, end_row) =
+                if start_row > end_row { (end_row, start_row) } else { (start_row, end_row) };
+            let (start_col, end_col) =
+                if start_col > end_col { (end_col, start_col) } else { (start_col, end_col) };
             let cell_row = cell / cols;
             let cell_col = cell % cols;
             if cell_row >= start_row
@@ -355,14 +339,7 @@ impl Graph {
         let mut on_stack = vec![false; state.num_cells];
         let mut result = Vec::new();
         let mut has_cycle = false;
-        self.dfs(
-            start_cell,
-            &mut visited,
-            &mut on_stack,
-            &mut result,
-            &mut has_cycle,
-            cols,
-        );
+        self.dfs(start_cell, &mut visited, &mut on_stack, &mut result, &mut has_cycle, cols);
         if has_cycle {
             state.has_cycle = true;
             return Err("Circular dependency detected");
