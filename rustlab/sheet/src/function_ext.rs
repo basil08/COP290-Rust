@@ -38,7 +38,10 @@ impl Cell {
     /// assert!(cell.is_valid);
     /// ```
     pub fn new_int(value: i32) -> Self {
-        Cell { value: CellValue::Int(value), is_valid: true }
+        Cell {
+            value: CellValue::Int(value),
+            is_valid: true,
+        }
     }
 
     /// Creates a new `Cell` containing a floating-point value.
@@ -46,7 +49,10 @@ impl Cell {
     /// # Arguments
     /// * `value` - The float to store in the cell.
     pub fn new_float(value: f64) -> Self {
-        Cell { value: CellValue::Float(value), is_valid: true }
+        Cell {
+            value: CellValue::Float(value),
+            is_valid: true,
+        }
     }
 
     /// Creates a new `Cell` containing a string value.
@@ -54,7 +60,10 @@ impl Cell {
     /// # Arguments
     /// * `value` - The string to store in the cell.
     pub fn new_string(value: String) -> Self {
-        Cell { value: CellValue::String(value), is_valid: true }
+        Cell {
+            value: CellValue::String(value),
+            is_valid: true,
+        }
     }
 
     /// Returns an invalid `Cell` instance.
@@ -67,7 +76,10 @@ impl Cell {
     /// assert!(!err_cell.is_valid);
     /// ```
     pub fn invalid() -> Self {
-        Cell { value: CellValue::Int(0), is_valid: false }
+        Cell {
+            value: CellValue::Int(0),
+            is_valid: false,
+        }
     }
 }
 

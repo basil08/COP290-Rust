@@ -9,8 +9,7 @@ use crate::function_ext::CellValue;
 /// - `op_type`: The operation type (e.g., literal assignment, arithmetic, sum, avg, etc.).
 /// - `op_info1`: First operand (could be a cell index or constant).
 /// - `op_info2`: Second operand (used for binary ops or range end).
-#[derive(Clone, Copy)]
-
+#[derive(Clone, Copy, Default)]
 pub struct Formula {
     pub op_type: i32,
     pub op_info1: i32,
@@ -49,7 +48,10 @@ pub struct Graph {
 }
 impl Clone for Graph {
     fn clone(&self) -> Self {
-        Graph { adj_lists_head: self.adj_lists_head.clone(), ranges_head: self.ranges_head.clone() }
+        Graph {
+            adj_lists_head: self.adj_lists_head.clone(),
+            ranges_head: self.ranges_head.clone(),
+        }
     }
 }
 
@@ -62,7 +64,10 @@ impl Graph {
         for _ in 0..num_cells {
             adj_lists_head.push(None);
         }
-        Graph { adj_lists_head, ranges_head: None }
+        Graph {
+            adj_lists_head,
+            ranges_head: None,
+        }
     }
 
     /// Adds a formula for a specific cell, recording the operation type and operands.
@@ -71,7 +76,6 @@ impl Graph {
     /// - `c1`, `c2`: Operands (cell references or constants).
     /// - `op_type`: Type of operation (e.g., addition, SUM, AVG, etc.).
     /// - `formula_array`: Mutable reference to the formula array.
-
     pub fn add_formula(
         &mut self,
         cell: i32,
@@ -80,7 +84,11 @@ impl Graph {
         op_type: i32,
         formula_array: &mut [Formula],
     ) {
-        let mut new_formula = Formula { op_type, op_info1: -1, op_info2: -1 };
+        let mut new_formula = Formula {
+            op_type,
+            op_info1: -1,
+            op_info2: -1,
+        };
         if op_type == 0 {
             new_formula.op_info1 = c1;
         } else {
@@ -110,7 +118,6 @@ impl Graph {
     /// Adds a single dependency edge to the graph from `cell1` to `head_idx`.
     ///
     /// Ensures no duplicate edges.
-
     pub fn add_edge(&mut self, cell1: i32, head_idx: usize) {
         let head = &mut self.adj_lists_head[head_idx];
         if head.is_none() {
@@ -130,14 +137,12 @@ impl Graph {
         current.next = Some(Self::add_node(cell1));
     }
     /// Adds a rectangular dependency range to the graph with the specified dependent cell.
-
     pub fn add_range_to_graph(&mut self, start_cell: i32, end_cell: i32, dependent_cell: i32) {
         if let Some(new_range) = self.add_range(start_cell, end_cell, dependent_cell) {
             self.ranges_head = Some(new_range);
         }
     }
     /// Deletes a single dependency node (edge) pointing from `cell1` in the list at `head_idx`.
-
     pub fn delete_node(&mut self, cell1: i32, head_idx: usize) {
         let head = &mut self.adj_lists_head[head_idx];
         if head.is_none() {
@@ -195,7 +200,6 @@ impl Graph {
     /// Deletes any range that affects `dependent_cell`.
     ///
     /// Used for cleaning up graph dependencies on formula deletion.
-
     pub fn delete_range_from_graph(&mut self, dependent_cell: i32) {
         let mut current = &mut self.ranges_head;
 
@@ -213,7 +217,6 @@ impl Graph {
     }
 
     /// Removes all dependency edges associated with a given formula.
-
     pub fn delete_edge(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
         let x = formula_array[cell as usize];
         match x.op_type {
@@ -232,7 +235,6 @@ impl Graph {
     /// Rebuilds all dependency edges for the given formula.
     ///
     /// Useful after modifying a formula or loading a snapshot.
-
     pub fn add_edge_formula(&mut self, cell: i32, _cols: i32, formula_array: &[Formula]) {
         let x = formula_array[cell as usize];
         match x.op_type {
@@ -265,7 +267,6 @@ impl Graph {
     /// - `result`: Output topologically sorted result
     /// - `has_cycle`: Set to true if a cycle is detected
     /// - `cols`: Number of spreadsheet columns
-
     fn dfs(
         &self,
         cell: i32,
@@ -287,6 +288,8 @@ impl Graph {
                 self.dfs(dependent, visited, on_stack, result, has_cycle, cols);
             } else if on_stack[dependent as usize] {
                 *has_cycle = true;
+                // HAS_CYCLE.store(true, Ordering::Relaxed);  // or Ordering::SeqCst if needed
+
                 return;
             }
             if *has_cycle {
@@ -303,10 +306,16 @@ impl Graph {
             let start_col = start_cell % cols;
             let end_row = end_cell / cols;
             let end_col = end_cell % cols;
-            let (start_row, end_row) =
-                if start_row > end_row { (end_row, start_row) } else { (start_row, end_row) };
-            let (start_col, end_col) =
-                if start_col > end_col { (end_col, start_col) } else { (start_col, end_col) };
+            let (start_row, end_row) = if start_row > end_row {
+                (end_row, start_row)
+            } else {
+                (start_row, end_row)
+            };
+            let (start_col, end_col) = if start_col > end_col {
+                (end_col, start_col)
+            } else {
+                (start_col, end_col)
+            };
             let cell_row = cell / cols;
             let cell_col = cell % cols;
             if cell_row >= start_row
@@ -318,6 +327,8 @@ impl Graph {
                     self.dfs(dependent, visited, on_stack, result, has_cycle, cols);
                 } else if on_stack[dependent as usize] {
                     *has_cycle = true;
+                    // HAS_CYCLE.store(true, Ordering::Relaxed);  // or Ordering::SeqCst if needed
+
                     return;
                 }
                 if *has_cycle {
@@ -334,7 +345,6 @@ impl Graph {
     /// Used before recalculation to ensure a valid execution order.
     ///
     /// Returns an error if a circular dependency is detected.
-
     pub fn topo_sort_from_cell(
         &self,
         start_cell: i32,
@@ -345,7 +355,14 @@ impl Graph {
         let mut on_stack = vec![false; state.num_cells];
         let mut result = Vec::new();
         let mut has_cycle = false;
-        self.dfs(start_cell, &mut visited, &mut on_stack, &mut result, &mut has_cycle, cols);
+        self.dfs(
+            start_cell,
+            &mut visited,
+            &mut on_stack,
+            &mut result,
+            &mut has_cycle,
+            cols,
+        );
         if has_cycle {
             state.has_cycle = true;
             return Err("Circular dependency detected");
@@ -358,7 +375,6 @@ impl Graph {
     ///
     /// Supports direct assignment, binary operations, range-based functions,
     /// and sleep-based side-effects.
-
     pub fn recalc(
         &self,
         cols: i32,
@@ -617,10 +633,4 @@ pub struct StateSnapshot {
     pub formula_array: Vec<Formula>,
     /// Dependency graph linking formulas and affected cells.
     pub graph: Graph,
-}
-
-impl Default for Formula {
-    fn default() -> Self {
-        Formula { op_type: 0, op_info1: 0, op_info2: 0 }
-    }
 }

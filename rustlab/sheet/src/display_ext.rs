@@ -45,8 +45,11 @@ pub fn printer(currx: i32, curry: i32, arr: &[Cell], c: i32, r: i32) {
                     CellValue::Int(i) => print!("{:<10}", i),
                     CellValue::Float(f) => print!("{:<10.2}", f),
                     CellValue::String(s) => {
-                        let truncated =
-                            if s.len() > 10 { format!("{:.10}", &s[..10]) } else { s.clone() };
+                        let truncated = if s.len() > 10 {
+                            format!("{:.10}", &s[..10])
+                        } else {
+                            s.clone()
+                        };
                         print!("{:<10}", truncated);
                     }
                 }
@@ -86,7 +89,7 @@ pub fn scroller(
     r: i32,
     _graph: &Graph,
 ) -> Result<(), &'static str> {
-    let mut flag = false;
+    // let mut _flag = false;
 
     match a {
         "w" => {
@@ -94,7 +97,7 @@ pub fn scroller(
                 if *curry > 0 {
                     *curry = 0;
                 } else {
-                    flag = true;
+                    // flag = true;
                 }
             } else {
                 *curry -= 10;
@@ -103,7 +106,7 @@ pub fn scroller(
         "d" => {
             let remaining_cols = c - *currx - 10;
             if remaining_cols <= 0 {
-                flag = true;
+                // flag = true;
             } else if remaining_cols < 10 {
                 *currx += remaining_cols;
             } else {
@@ -115,7 +118,7 @@ pub fn scroller(
                 if *currx > 0 {
                     *currx = 0;
                 } else {
-                    flag = true;
+                    // flag = true;
                 }
             } else {
                 *currx -= 10;
@@ -124,7 +127,7 @@ pub fn scroller(
         "s" => {
             let remaining_rows = r - *curry - 10;
             if remaining_rows <= 0 {
-                flag = true;
+                // flag = true;
             } else if remaining_rows < 10 {
                 *curry += remaining_rows;
             } else {
@@ -138,12 +141,12 @@ pub fn scroller(
             }
             let cell = cell_parser(parts[0], c, r, 0, parts[0].len() - 1)?;
             if cell < 0 || cell >= (c * r) {
-                flag = true;
+                // flag = true;
             } else {
                 let start_row = cell / c;
                 let start_col = cell % c;
                 if start_row >= r || start_col >= c {
-                    flag = true;
+                    // flag = true;
                 } else {
                     *currx = start_col;
                     *curry = start_row;
