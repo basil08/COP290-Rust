@@ -1,0 +1,118 @@
+\subsection{Frontend Application Architecture}
+
+The frontend is implemented in Rust and compiled to WebAssembly using the Yew framework, offering a dynamic and reactive interface for interacting with the spreadsheet application.
+
+\subsubsection{Frontend Structure}
+
+\begin{itemize}
+    \item \textbf{App Component} - The root component responsible for initializing and structuring the application.
+    \item \textbf{TableComponent} - Renders the spreadsheet grid including rows, columns, and populated cell data.
+    \item \textbf{CellComponent} - Represents each editable spreadsheet cell with live interaction support.
+    \item \textbf{RequestForm} - An input area for command and formula execution.
+\end{itemize}
+
+\subsubsection{State Management}
+
+\begin{itemize}
+    \item \textbf{AppContext} - Global context for managing application-wide state via reducer pattern.
+    \item \textbf{AppState} - Contains shared state data, such as the sheet and UI refresh triggers.
+    \item \textbf{AppAction} - Defines state-changing actions such as refreshing the view or updating sheet content.
+    \item \textbf{Sheet Model} - The internal data structure representing the spreadsheet grid.
+\end{itemize}
+
+\subsubsection{Component Features}
+
+\paragraph{TableComponent}
+\begin{itemize}
+    \item Fetches data dynamically from the backend API.
+    \item Renders an Excel-style grid with labeled row and column headers.
+    \item Refreshes the view when a state trigger is activated.
+\end{itemize}
+
+\paragraph{CellComponent}
+\begin{itemize}
+    \item Allows direct in-place editing of individual cells.
+    \item Submits values on Enter key press.
+    \item Manages focus and selection for a seamless editing experience.
+    \item Communicates cell updates to the backend via API.
+\end{itemize}
+
+\paragraph{RequestForm}
+\begin{itemize}
+    \item Provides a dedicated field for command or formula input.
+    \item Sends asynchronous requests to the server.
+    \item Displays responses or errors as formatted feedback.
+\end{itemize}
+
+\subsubsection{API Communication}
+
+\begin{itemize}
+    \item Uses \texttt{gloo\_net} for performing HTTP requests in the browser.
+    \item Serializes and deserializes data using JSON for communication with the server.
+    \item Handles different content types and responses from multiple API endpoints.
+    \item Provides robust error handling for failed requests and malformed responses.
+\end{itemize}
+
+\subsubsection{UI Features}
+
+\begin{itemize}
+    \item Clean and modern responsive design.
+    \item Clear feedback for loading states and errors.
+    \item Well-structured headers for intuitive navigation.
+    \item A command center panel for formula input and result display.
+\end{itemize}
+
+\subsubsection{Technical Implementation}
+
+\begin{itemize}
+    \item Compiled to WebAssembly for high-performance execution in modern browsers.
+    \item Uses Yew hooks to manage component lifecycles and reactivity.
+    \item Implements event-driven interactions including form submission and input events.
+    \item Employs node references for accessing and manipulating DOM nodes.
+    \item Provides in-browser logging and error diagnostics through console output.
+\end{itemize}
+
+\subsection{Challenges Faced}
+
+Throughout the development of the spreadsheet application, several technical and architectural challenges were encountered:
+
+\begin{itemize}
+    \item \textbf{Formula Parsing Complexity} - Implementing a parser capable of handling nested formulas, precedence rules, and cell references required custom logic and rigorous testing.
+    
+    \item \textbf{Dependency Tracking} - Maintaining a real-time graph for dependent cells and updating them in the correct order posed consistency and performance challenges.
+    
+    \item \textbf{Asynchronous Communication} - Synchronizing frontend updates with backend state through async HTTP requests introduced potential race conditions and refresh issues.
+    
+    \item \textbf{Undo/Redo System} - Designing a history stack that captures full application state snapshots while maintaining performance proved non-trivial.
+    
+    \item \textbf{WebAssembly Limitations} - Debugging and error tracking in Rust-compiled WebAssembly environments required special attention due to limited debugging tools in browsers.
+    
+    \item \textbf{Frontend-Backend Type Matching} - Ensuring accurate serialization and deserialization of complex types like formulas and expressions required strict JSON schema adherence.
+    
+    \item \textbf{Thread Safety} - Managing concurrent access to shared state (`Arc<RwLock<...>>`) without introducing deadlocks or inconsistencies needed careful architectural design.
+\end{itemize}
+
+\subsection{Future Improvements}
+
+Several areas have been identified where the application can be further enhanced:
+
+\begin{itemize}
+    \item \textbf{UI Enhancements} - Add features such as cell coloring, borders, copy-paste, and multi-cell selection for a richer user experience.
+    
+    \item \textbf{Live Formula Suggestions} - Integrate formula autocomplete and inline documentation similar to Excel for improved usability.
+    
+    \item \textbf{Performance Optimization} - Introduce diff-based updates instead of full sheet refreshes to reduce backend load and network traffic.
+    
+    \item \textbf{Cell Format Types} - Enable formatting for numbers, currencies, dates, and percentage representations.
+    
+    \item \textbf{Persistent Storage} - Integrate a database (e.g., SQLite or PostgreSQL) for saving and loading spreadsheet sessions across sessions or users.
+    
+    \item \textbf{User Authentication} - Add login/signup support to allow users to manage private spreadsheets and sync across devices.
+    
+    \item \textbf{Testing Coverage} - Expand unit and integration test coverage, particularly around formula evaluation and graph updates.
+    
+    \item \textbf{Real-time Collaboration} - Implement WebSocket-based multi-user editing support for real-time collaboration.
+\end{itemize}
+
+
+This frontend architecture combines the performance of WebAssembly with the ergonomics of Rust and the reactivity of Yew, resulting in a fast, maintainable, and user-friendly spreadsheet interface.
