@@ -1,21 +1,43 @@
+//! # Cell Component
+//! 
+//! This module provides a component for individual spreadsheet cells with editing capabilities.
+//! It handles user interaction, cell value updates, and communication with the backend API.
+
 use crate::context::{AppAction, AppContext};
 use gloo::console::log;
 use gloo_net::http::Request;
-use serde_json;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{FocusEvent, HtmlInputElement, InputEvent, KeyboardEvent};
 use yew::prelude::*;
 
+/// Properties for the cell component.
+///
+/// Contains:
+/// - The current cell value
+/// - Row and column identifiers
+/// - API endpoint for updates
 #[derive(Properties, PartialEq)]
 pub struct Props {
+    /// Current value displayed in the cell
     pub value: String,
+    /// Row identifier (zero-based index)
     pub row_id: String,
+    /// Column identifier (zero-based index)
     pub column_id: String,
+    /// API endpoint for sending cell updates
     pub api_url: String,
 }
 
+/// A component that represents an individual cell in the spreadsheet.
+///
+/// Features:
+/// - Click to edit in-place
+/// - Auto-focus on edit mode
+/// - Submit on enter or blur
+/// - Communicates with backend when cell value changes
 #[function_component(CellComponent)]
+#[allow(unused_variables)]
 pub fn cell_component(props: &Props) -> Html {
     let value = use_state(|| props.value.clone());
     let is_editing = use_state(|| false);
@@ -50,7 +72,6 @@ pub fn cell_component(props: &Props) -> Html {
             || ()
         });
     }
-
     let onclick = {
         let is_editing = is_editing.clone();
 
@@ -59,6 +80,12 @@ pub fn cell_component(props: &Props) -> Html {
         })
     };
 
+    // Handler for blur events on the input field.
+    // 
+    // When the input loses focus:
+    // 1. Checks if the value has changed
+    // 2. If changed, sends an update to the backend API
+    // 3. Exits edit mode
     let onblur = {
         let value = value.clone();
         let is_editing = is_editing.clone();
@@ -106,7 +133,6 @@ pub fn cell_component(props: &Props) -> Html {
                         }
                         Err(e) => {
                             log!("Error updating cell: {:?}", e.to_string());
-                            return;
                         }
                     }
                 });
@@ -116,6 +142,10 @@ pub fn cell_component(props: &Props) -> Html {
         })
     };
 
+    // Handler for keypress events.
+    // 
+    // Handles special key behavior:
+    // - Enter key: Submits the edit by blurring the input field
     let onkeypress = {
         let is_editing = is_editing.clone();
 
@@ -132,6 +162,9 @@ pub fn cell_component(props: &Props) -> Html {
         })
     };
 
+    // Handler for input events.
+    // 
+    // Updates the component's internal state as the user types.
     let oninput = {
         let value = value.clone();
 

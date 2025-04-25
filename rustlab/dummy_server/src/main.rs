@@ -1,5 +1,9 @@
+//! # Rust Spreadsheet Backend Server
+//! 
+//! This module provides the HTTP server implementation for the Rust Spreadsheet application.
+//! It handles API endpoints for spreadsheet operations, state management, and client communication.
+
 mod handlers;
-mod operations;
 mod server_models;
 mod types;
 
@@ -7,24 +11,47 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use sheet::display_ext::{printer, scroller};
 use sheet::function_ext::Cell;
 use sheet::graph_ext::StateSnapshot;
 use sheet::graph_ext::{Formula, Graph, State};
-use sheet::parser_ext::parser;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
 
 use handlers::{get_sheet, process_query, redo_action, undo_action, update_cell};
 use server_models::Sheet;
-use types::{AppState, ExtendedState};
+use types::ExtendedState;
 
-// Helper function to create a snapshot (similar to the CLI version)
-fn create_snapshot(arr: &Vec<Cell>, formula_array: &Vec<Formula>, graph: &Graph) -> StateSnapshot {
-    StateSnapshot { arr: arr.clone(), formula_array: formula_array.clone(), graph: graph.clone() }
+/// Creates a snapshot of the current spreadsheet state for undo/redo functionality.
+///
+/// This function captures all data necessary to restore the sheet to a previous state,
+/// including cells, formulas, and dependency graph.
+///
+/// # Arguments
+///
+/// * `arr` - The array of cells representing the current sheet data
+/// * `formula_array` - The array of formulas associated with cells
+/// * `graph` - The dependency graph tracking relationships between cells
+///
+/// # Returns
+///
+/// A `StateSnapshot` containing clones of all state components
+fn create_snapshot(arr: &[Cell], formula_array: &[Formula], graph: &Graph) -> StateSnapshot {
+    StateSnapshot { arr: arr.to_owned(), formula_array: formula_array.to_owned(), graph: graph.clone() }
 }
 
+/// Application entry point - initializes and runs the HTTP server.
+///
+/// This function:
+/// 1. Sets up the initial spreadsheet state
+/// 2. Configures API endpoints and CORS policy
+/// 3. Starts the HTTP server on the specified address
+///
+/// The server provides endpoints for:
+/// - Getting the sheet data
+/// - Updating individual cells
+/// - Processing queries
+/// - Undo/redo operations
 #[tokio::main]
 async fn main() {
     // Initialize the sheet with default values
@@ -34,22 +61,16 @@ async fn main() {
 
     // Initialize extended state components
     let cells = vec![Cell::new_int(0); num_cells];
-    let formula_array = vec![Formula::default(); num_cells];
-    let graph = Graph::new(num_cells);
-    let state = State::new();
 
     // Initialize regular sheet model for API compatibility
     let sheet = Sheet::new(10, 10);
     let num_cells = r * c;
-    let cols_i32 = c as i32;
-    let rows_i32 = r as i32;
 
-    let mut arr = vec![Cell::new_int(0); num_cells];
-    let mut formula_array = vec![Formula::default(); num_cells];
-    let mut graph = Graph::new(num_cells);
-    let mut state = State::new();
-    let mut undo_stack: Vec<StateSnapshot> = Vec::new();
-    let mut redo_stack: Vec<StateSnapshot> = Vec::new();
+    let formula_array = vec![Formula::default(); num_cells];
+    let graph = Graph::new(num_cells);
+    let state = State::new();
+    let undo_stack: Vec<StateSnapshot> = Vec::new();
+    let redo_stack: Vec<StateSnapshot> = Vec::new();
 
     // Create the extended state with all components
     let extended_state = ExtendedState {
@@ -59,9 +80,7 @@ async fn main() {
         graph: graph.clone(),
         state: state.clone(),
         undo_stack,
-        redo_stack,
-        current_x: 0,
-        current_y: 0,
+        redo_stack
     };
     let app_state = Arc::new(RwLock::new(extended_state));
 
