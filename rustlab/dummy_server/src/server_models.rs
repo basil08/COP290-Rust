@@ -4,7 +4,7 @@
 //! the spreadsheet state. These models are serializable for client-server communication.
 
 use serde::{Deserialize, Serialize};
-use sheet::function_ext::{Cell, CellValue};
+use sheet::function_ext::Cell;
 
 /// Represents a spreadsheet with rows and columns of cells.
 ///
@@ -15,7 +15,7 @@ pub struct Sheet {
     /// The two-dimensional grid of cells that stores the spreadsheet data.
     pub data: Vec<Vec<Cell>>,
 }
-
+#[allow(dead_code)]
 impl Sheet {
     /// Creates a new spreadsheet with the specified number of rows and columns.
     ///

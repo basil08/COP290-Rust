@@ -3,6 +3,7 @@
 //! This module contains handler functions for the various API endpoints exposed by
 //! the spreadsheet server. It implements the core functionality for retrieving sheet data,
 //! updating cells, processing queries, and performing undo/redo operations.
+#![deny(clippy::all)]
 
 use axum::{
     body::Bytes,
@@ -11,7 +12,6 @@ use axum::{
     Json,
 };
 
-use crate::operations::{calculate_average, calculate_sum, clear_cells, count_cells};
 use crate::server_models::Sheet;
 use crate::types::{AppState, QueryResponse, UpdateCellRequest, UpdateResponse};
 
@@ -364,28 +364,6 @@ pub fn cell_parser(
     Ok(())
 }
 
-/// Converts a string value to the appropriate cell value type.
-///
-/// Attempts to parse the string as an integer first, then as a float,
-/// and defaults to string if neither conversion succeeds.
-///
-/// # Arguments
-///
-/// * `value` - The string value to convert
-///
-/// # Returns
-///
-/// The appropriate CellValue variant based on the parsed type
-pub fn string_to_cell(value: &str) -> CellValue {
-    if let Ok(int_value) = value.parse::<i32>() {
-        CellValue::Int(int_value)
-    } else if let Ok(float_value) = value.parse::<f64>() {
-        CellValue::Float(float_value)
-    } else {
-        CellValue::String(value.to_string())
-    }
-}
-
 /// Processes query commands sent from the client.
 ///
 /// This handler parses and executes commands like formulas,
@@ -424,7 +402,7 @@ pub async fn process_query(State(state): State<AppState>, body: Bytes) -> impl I
     let mut graph_clone = app_state.graph.clone();
     let mut state_clone = app_state.state.clone();
     // Process the query - for direct formula/command input
-    let _ = match parser(
+    match parser(
         query,
         cols as i32,
         rows as i32,
@@ -458,18 +436,18 @@ pub async fn process_query(State(state): State<AppState>, body: Bytes) -> impl I
             }
 
             // Formula processed successfully - continue with the existing code
-            return Json(QueryResponse {
+            Json(QueryResponse {
                 success: true,
                 message: "Formula executed successfully".to_string(),
                 result: None,
-            });
+            })
         }
         Err(e) => {
-            return Json(QueryResponse {
+            Json(QueryResponse {
                 success: false,
                 message: format!("Formula error: {}", e),
                 result: None,
-            });
+            })
         }
-    };
+    }
 }

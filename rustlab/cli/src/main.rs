@@ -3,18 +3,11 @@ use std::io::{self, Write};
 use std::time::Instant;
 
 // Import everything upfront
-use sheet::display;
-use sheet::display_ext;
-use sheet::function;
-use sheet::function_ext::{self, Cell};
+use sheet::function_ext;
 use sheet::graph_ext::{self, StateSnapshot};
-use sheet::parser;
-use sheet::parser_ext;
-use sheet::util_ext;
 
 static mut NUM_CELLS: usize = 0;
 static mut HAS_CYCLE: bool = false;
-static mut INVALID_RANGE: bool = false;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -49,13 +42,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 // ✅ Snapshot function just for extended mode
 fn create_snapshot_extended(
-    arr: &Vec<function_ext::Cell>,
-    formula_array: &Vec<graph_ext::Formula>,
+    arr: &[function_ext::Cell],
+    formula_array: &[graph_ext::Formula],
     graph: &graph_ext::Graph,
 ) -> graph_ext::StateSnapshot {
     graph_ext::StateSnapshot {
-        arr: arr.clone(),
-        formula_array: formula_array.clone(),
+        arr: arr.to_owned(),
+        formula_array: formula_array.to_owned(),
         graph: graph.clone(),
     }
 }

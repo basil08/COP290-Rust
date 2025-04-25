@@ -34,11 +34,7 @@ pub struct ExtendedState {
     /// Stack of previous states for undo operations
     pub undo_stack: Vec<StateSnapshot>, 
     /// Stack of undone states for redo operations
-    pub redo_stack: Vec<StateSnapshot>, 
-    /// Current cursor X position
-    pub current_x: i32,                 
-    /// Current cursor Y position
-    pub current_y: i32,                 
+    pub redo_stack: Vec<StateSnapshot>         
 }
 
 /// Thread-safe shared application state.

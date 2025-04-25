@@ -5,7 +5,7 @@
 //! and deserialized for communication with the backend.
 
 use serde::{Deserialize, Serialize};
-use sheet::function_ext::{Cell, CellValue};
+use sheet::function_ext::Cell;
 
 /// Represents a spreadsheet with rows and columns of cells.
 ///
@@ -13,11 +13,13 @@ use sheet::function_ext::{Cell, CellValue};
 /// It can be serialized for API communication and provides methods for creating
 /// and accessing the spreadsheet data.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+
 pub struct Sheet {
     /// The two-dimensional grid of cells that stores the spreadsheet data.
     pub data: Vec<Vec<Cell>>,
 }
 
+#[allow(dead_code)]
 impl Sheet {
     /// Creates a new spreadsheet with the specified number of rows and columns.
     ///

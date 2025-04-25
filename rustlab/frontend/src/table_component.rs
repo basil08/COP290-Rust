@@ -12,7 +12,7 @@ use yew::prelude::*;
 use crate::cell_component::CellComponent;
 use crate::context::AppContext;
 use crate::models::*;
-use sheet::function_ext::{Cell, CellValue};
+use sheet::function_ext::CellValue;
 
 /// The main spreadsheet table component.
 ///

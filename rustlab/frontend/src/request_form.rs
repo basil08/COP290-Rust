@@ -4,7 +4,6 @@
 //! to the backend API and displays the responses.
 
 use gloo_net::http::Request;
-use serde_json;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -27,22 +26,23 @@ pub struct RequestFormProps {
 /// - A submit button to execute the command
 /// - A response display area for showing API results
 #[function_component(RequestForm)]
+#[allow(unused_variables)]
 pub fn request_form(props: &RequestFormProps) -> Html {
     let input_ref = use_node_ref();
-    let response = use_state(|| String::new());
+    let response = use_state(String::new);
     let is_loading = use_state(|| false);
 
     // Get the app context for triggering refreshes
     let app_context = use_context::<AppContext>().expect("no ctx found");
 
-    /// Handler for form submission events.
-    ///
-    /// This callback:
-    /// 1. Prevents default form submission
-    /// 2. Gets the query text from the input
-    /// 3. Sends the query to the API asynchronously
-    /// 4. Updates the response state with the result
-    /// 5. Triggers app refresh on success
+    // Handler for form submission events.
+    //
+    // This callback:
+    // 1. Prevents default form submission
+    // 2. Gets the query text from the input
+    // 3. Sends the query to the API asynchronously
+    // 4. Updates the response state with the result
+    // 5. Triggers app refresh on success
     let onsubmit = {
         let input_ref = input_ref.clone();
         let response = response.clone();

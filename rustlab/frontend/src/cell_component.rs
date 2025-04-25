@@ -6,7 +6,6 @@
 use crate::context::{AppAction, AppContext};
 use gloo::console::log;
 use gloo_net::http::Request;
-use serde_json;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{FocusEvent, HtmlInputElement, InputEvent, KeyboardEvent};
@@ -38,6 +37,7 @@ pub struct Props {
 /// - Submit on enter or blur
 /// - Communicates with backend when cell value changes
 #[function_component(CellComponent)]
+#[allow(unused_variables)]
 pub fn cell_component(props: &Props) -> Html {
     let value = use_state(|| props.value.clone());
     let is_editing = use_state(|| false);
@@ -72,10 +72,6 @@ pub fn cell_component(props: &Props) -> Html {
             || ()
         });
     }
-
-    /// Handler for click events on the cell.
-    /// 
-    /// Activates edit mode when a cell is clicked.
     let onclick = {
         let is_editing = is_editing.clone();
 
@@ -84,12 +80,12 @@ pub fn cell_component(props: &Props) -> Html {
         })
     };
 
-    /// Handler for blur events on the input field.
-    /// 
-    /// When the input loses focus:
-    /// 1. Checks if the value has changed
-    /// 2. If changed, sends an update to the backend API
-    /// 3. Exits edit mode
+    // Handler for blur events on the input field.
+    // 
+    // When the input loses focus:
+    // 1. Checks if the value has changed
+    // 2. If changed, sends an update to the backend API
+    // 3. Exits edit mode
     let onblur = {
         let value = value.clone();
         let is_editing = is_editing.clone();
@@ -137,7 +133,6 @@ pub fn cell_component(props: &Props) -> Html {
                         }
                         Err(e) => {
                             log!("Error updating cell: {:?}", e.to_string());
-                            return;
                         }
                     }
                 });
@@ -147,10 +142,10 @@ pub fn cell_component(props: &Props) -> Html {
         })
     };
 
-    /// Handler for keypress events.
-    /// 
-    /// Handles special key behavior:
-    /// - Enter key: Submits the edit by blurring the input field
+    // Handler for keypress events.
+    // 
+    // Handles special key behavior:
+    // - Enter key: Submits the edit by blurring the input field
     let onkeypress = {
         let is_editing = is_editing.clone();
 
@@ -167,9 +162,9 @@ pub fn cell_component(props: &Props) -> Html {
         })
     };
 
-    /// Handler for input events.
-    /// 
-    /// Updates the component's internal state as the user types.
+    // Handler for input events.
+    // 
+    // Updates the component's internal state as the user types.
     let oninput = {
         let value = value.clone();
 
