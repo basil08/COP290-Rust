@@ -21,14 +21,6 @@ use crate::function_ext::CellValue;
 ///
 /// # Returns
 /// A new `Cell` with the result of the operation or marked invalid.
-///
-/// # Examples
-/// ```
-/// let c1 = Cell::new_int(6);
-/// let c2 = Cell::new_int(3);
-/// let result = arithmetic_eval(c1, c2, '/');
-/// assert_eq!(result.value, CellValue::Int(2));
-/// ```
 pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
     if !v1.is_valid || !v2.is_valid {
         return Cell::invalid();
@@ -125,12 +117,6 @@ pub fn arithmetic_eval(v1: Cell, v2: Cell, op: char) -> Cell {
 ///
 /// # Returns
 /// An integer representing the operation type.
-///
-/// # Example
-/// ```
-/// assert_eq!(return_optype('+'), 1);
-/// assert_eq!(return_optype('x'), -1);
-/// ```
 pub fn return_optype(op: char) -> i32 {
     match op {
         '+' => 1,

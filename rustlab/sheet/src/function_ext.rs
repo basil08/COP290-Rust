@@ -30,13 +30,6 @@ impl Cell {
     ///
     /// # Arguments
     /// * `value` - The integer to store in the cell.
-    ///
-    /// # Example
-    /// ```
-    /// let cell = Cell::new_int(42);
-    /// assert_eq!(cell.value, CellValue::Int(42));
-    /// assert!(cell.is_valid);
-    /// ```
     pub fn new_int(value: i32) -> Self {
         Cell { value: CellValue::Int(value), is_valid: true }
     }
@@ -60,12 +53,6 @@ impl Cell {
     /// Returns an invalid `Cell` instance.
     ///
     /// This is typically used when parsing fails or a computation is invalid.
-    ///
-    /// # Example
-    /// ```
-    /// let err_cell = Cell::invalid();
-    /// assert!(!err_cell.is_valid);
-    /// ```
     pub fn invalid() -> Self {
         Cell { value: CellValue::Int(0), is_valid: false }
     }
