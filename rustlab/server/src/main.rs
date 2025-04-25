@@ -224,6 +224,12 @@ async fn accept_connection(stream: TcpStream, clients: Clients) {
 /// A `Result` indicating success or failure of the server operation.
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    // read port from command line arguments
+    let args: Vec<String> = std::env::args().collect();
+
+    // default port is 3030
+    let port = if args.len() > 1 { args[1].parse::<u16>().expect("Invalid port") } else { 3030 };
+
     // initialize an empty hashmap to store clients
     info!("Initializing server...");
     let clients: Clients = Arc::new(RwLock::new(HashMap::new()));
@@ -231,9 +237,9 @@ async fn main() -> Result<(), Error> {
 
     info!("Starting server...");
     // bind to port 3030: this is server's listening port
-    let listener = TcpListener::bind("127.0.0.1:3030").await.expect("Failed to bind");
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).await.expect("Failed to bind");
 
-    info!("Server is running on port 3030");
+    info!("Server is running on port {}", port);
 
     // accept connections
     while let Ok((stream, _)) = listener.accept().await {
