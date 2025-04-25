@@ -91,6 +91,8 @@ latex-docs:
 	TEXINPUTS=.:./tau-class:./figures: $(LATEX) main.tex && \
 	mv main.pdf ../report.pdf
 
+coverage:
+	cd sheet && cargo tarpaulin --out Html
 cargo-docs:
 	@echo "Generating Rust documentation..."
 	$(CARGO) doc --open
