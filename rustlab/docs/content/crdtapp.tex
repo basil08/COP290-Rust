@@ -1,0 +1,65 @@
+% block diagram
+% explain each component
+% brief about CRDTs
+% why use CRDTs (example)
+% explain structs and interfaces in crdt.rs
+% explain WebSocket server endpoints
+
+\subsection{System Design}
+
+The \verb|WebSocket| based approach implements a \verb|WebSocket| enabled server which handles incoming requests from clients and promotes them to a \verb|ws| connection which is handled by a different thread using \verb|tokio::spawn()|. 
+
+\begin{itemize}
+    \item \textbf{crdt/} - Contains \verb|struct|s and datatypes for client-server communication, storing the sheet data model, and CRDT (Conflict-free replicating data types)-based \verb|struct|s.
+    \item \textbf{server/} - Contains implementation of a simple WebSocket based server which handles \verb|on_connection|, \verb|grid_update|, and \verb|on_close| requests from the client. Uses \verb|tokio| and \verb|tokio::tungstenite|.
+    \item \textbf{ws\_client/} - A WebSocket-enabled client using \verb|Leptos| and uses timestamps to update and make appropriate requests to the server.
+\end{itemize}
+
+\subsection{Structs and Interfaces}
+
+\subsubsection{\textbf{crdt/}}
+
+\begin{itemize}
+    \item \textbf{Client} - represents a Client with a unique name at the server.
+    \item \textbf{Event} - represents a generic event with some data and a typef
+    \item \textbf{InitEvent} - represents an \verb|Init| event when client wants to initiate a connection. The \verb|InitEvent| contains a name string.
+    \item \textbf{GridUpdateEvent} - represents a grid update event when a client makes a change to the sheet. It contains the name of the change-maker and the entire grid data.
+    \item \textbf{ClientListEvent} - represents the list of clients currently connected to the server. The server broadcasts this information for every client to update its own client list.
+    \item \textbf{Column} - represents a single cell. It contains the name of the last client who changed it, the timestamp, the index, and the value.
+    \item \textbf{Row} - represents a \verb|Row| in the sheet. Each \verb|Row| contains a list of \verb|Column| structs.
+\end{itemize}
+
+\subsubsection{\textbf{server/}}
+
+The \verb|server| object is a simple WebSocket-based server which listens on port \verb|3030| for any client connection requests. It spawns a thread for each client and goes into an infinite loop serving that client until the client disconnects. There are separate handlers for each client action: 
+\begin{itemize}
+    \item \verb|accept_connection(TcpStream, Clients)| - using \verb|tokio::tungstenite|, we promote the connection to a WS connection and match the client request to event type and dispatch the corresponding handler.
+    \item \verb|handle_init(InitEvent, Clients)| - adds this client to the \verb|ClientList| struct and broadcasts the list so that other clients update their local lists.
+    \item \verb|handle_grid_update(GridUpdateEvent, Clients)| - simply read, decode the Event object and broadcast to everyone on the client list.
+    \item \verb|handle_close(client_id, Clients)| - remove this client from the \verb|ClientList| and broadcast the updated \verb|ClientList| to everyone. 
+\end{itemize}
+
+\subsubsection{\textbf{client/}}
+
+The \verb|ws_client| module uses \verb|Leptos| to build a simple frontend for the application. The markup is stored in \verb|index.html| which contains an input field for the username, a Client list to show in the DOM and a table component for rendering the grid.
+
+The \verb|App| component in \verb|ws_client/lib.rs| uses two effects to handle local state from incoming server messages and another to propagate its own local state to the server using client requests.
+
+The rest of the code builds the following components:
+
+\begin{itemize}
+    \item \textbf{App} - main component which renders the page and handles server communication. It also handles changes to the local sheet data if required.
+    \item \textbf{Connect} - a simple \verb|FormInput| component which sends an \verb|InitEvent| request to the server.
+    \item \textbf{Clients} - a list of actively connected clients as broadcasted by the server in its \verb|ClientListEvent| message.
+    \item \textbf{Grid} - a table component which renders the spreadsheet and sends a \verb|GridUpdateEvent| to the server if any of the cell is updated by the user.
+\end{itemize}
+
+\subsection{Challenges faced}
+
+We faced multiple challenges during the implementation of this app. Some of them are listed below:
+
+\begin{itemize}
+    \item \textbf{Lack of accessible literature on CRDT} - This made it difficult to understand CRDTs as a beginner from reading academic papers. Eventually, we found few blogposts which explained the concept well.
+    \item \textbf{Understanding tokio library's async/await model} - The async/await model used by \verb|tokio| to implement its server was not clear to us and took time to implement properly to handle multiple client requests. 
+    \item \textbf{Outdated Leptos packages} - There were few outdated \verb|leptos-use| package which we had to use for constraints with \verb|leptos|. This made us rewrite the \verb|ws_client| using more primitive \verb|web_sys::WebSocket|, which Leptos depends on.
+\end{itemize}

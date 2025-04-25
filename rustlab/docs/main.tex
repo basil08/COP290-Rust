@@ -1,0 +1,125 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% --------------------------------------------------------
+% Tau
+% LaTeX Template
+% Version 2.4.4 (28/02/2025)
+%
+% Author: 
+% Guillermo Jimenez (memo.notess1@gmail.com)
+% 
+% License:
+% Creative Commons CC BY 4.0
+% --------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[9pt,a4paper,twocolumn,twoside]{tau-class/tau}
+\usepackage[english]{babel}
+% \usepackage{amssymb}
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+
+% Bibliography setup
+\usepackage[backend=biber,style=ieee]{biblatex}
+\addbibresource{references.bib}
+
+%% Spanish babel recomendation
+% \usepackage[spanish,es-nodecimaldot,es-noindentfirst]{babel} 
+
+%% Draft watermark
+% \usepackage{draftwatermark}
+
+%----------------------------------------------------------
+% TITLE
+%----------------------------------------------------------
+
+\journalname{Lab Report}
+\title{COP290: Rust Lab Report}
+
+%----------------------------------------------------------
+% AUTHORS, AFFILIATIONS AND PROFESSOR
+%----------------------------------------------------------
+
+\author[a]{Vani Gupta (2023CS10126)}
+\author[a]{Arnav Panjla (2023EE10978)}
+\author[a]{Basil Labib (2021TT11175)}
+
+%----------------------------------------------------------
+
+\affil[a]{Indian Institute of Technology, Delhi}
+
+\professor{Professor Abhilash Jindal, COP290 TAs}
+
+%----------------------------------------------------------
+% FOOTER INFORMATION
+%----------------------------------------------------------
+
+\institution{Indian Institute of Technology, Delhi}
+\footinfo{\LaTeX\ Lab Report}
+\theday{April 24, 2025}
+\leadauthor{Gupta et al.}
+\course{Creative Commons CC BY 4.0}
+
+%----------------------------------------------------------
+% ABSTRACT AND KEYWORDS
+%----------------------------------------------------------
+
+\begin{abstract}    
+    We added three extensions to the base Rust TUI spreadsheet program, 1) extended functionality such as undo/redo, autofill, etc. to TUI 2) web application to ease usage 3) multi-user, state-consistent CRDT-based WebSocket spreadsheet programme. 
+    We will discuss our design decisions, the system architecture for each extension, and the challenges and learnings from this project in this report.
+\end{abstract}
+
+%----------------------------------------------------------
+
+\keywords{lab report, rust, spreadsheet, CRDT, webapp, WebSocket}
+
+%----------------------------------------------------------
+
+\begin{document}
+		
+    \maketitle 
+    \thispagestyle{firststyle} 
+    \tauabstract 
+    % \tableofcontents
+    % \linenumbers 
+    
+%----------------------------------------------------------
+
+\section{Introduction}
+
+    \taustart{W}e proposed a decentralised, state-consistent spreadsheet program. In order to design and build such a complex system, we decomposed it into three checkpoints. We were able to achieve two out of these three checkpoints and one additional checkpoint not included in our proposal. 
+
+    \begin{itemize}
+        \item \cmark Browser-based GUI app using client-server architecture
+        \item \cmark Centralised state-consistent real-time GUI app using WebSockets and CRDTs
+        \item \xmark Decentralised state-consistent real-time GUI app using WebSockets and CRDTs
+    \end{itemize}
+
+    In addition, we also extended the base TUI which was not included in our initial proposal.
+
+    \begin{itemize}
+        \item \cmark Added undo/redo up to 5 previous steps
+        \item \cmark Predict cell values and autofill ranges
+        \item \cmark Support for non-integer datatypes like string, float and consistent operations on strings and floats
+    \end{itemize}
+
+\section{TUI Extension}
+
+    \input{content/tuiext.tex}
+	
+\section{Web Application GUI}
+
+    \input{content/webapp.tex}
+    
+\section{WebSocket and CRDT-based Web Application}
+
+    \input{content/crdtapp}
+
+\section{Demo images}
+
+    \input{content/images}
+%----------------------------------------------------------
+
+\printbibliography
+
+\end{document}
